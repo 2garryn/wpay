@@ -102,12 +102,51 @@ namespace wpay.Library.Services.Core.Messages
                 CreateAmountValue = amvalue
             };
         }
-
-
     }
 
+    public class UpdateTransactionCommand
+    {
+        public const string StatusCompleted = "completed";
+        public const string StatusCancelled = "cancelled";
+        public Guid Id {get;set;}
+        public string Status {get;set;}
+        public string Signature {get;set;}
+        public Dictionary<string, ValueType> Metadata {get;set;}
+        public Dictionary<string, string> Description {get;set;}
 
+        public bool FailOnUpdateDone {get;set;}
 
+        public (UpdateTransaction, UpdateTransactionOptions) To()
+        {
+            var descr = new TransactionDescription();
+            foreach(var kv in Description) descr.Add(kv.Key, kv.Value);
+            
+            var metadata = new TransactionMetadata();
+            foreach(var kv in Metadata) metadata.Add(kv.Key, kv.Value);
 
+            var update =  new UpdateTransaction(
+                new TransactionId(new UniqId(Id)),
+                Status == StatusCompleted ? UpdateStatus.Complete : UpdateStatus.Cancel,
+                Signature,
+                descr,
+                metadata 
+            );
+            var options = new UpdateTransactionOptions();
+            options.FailOnUpdateDone = FailOnUpdateDone;
+            return (update, options);
+        }
 
+        public UpdateTransactionCommand From(UpdateTransaction update, UpdateTransactionOptions options)
+        {
+            return new UpdateTransactionCommand
+            {
+                Id = update.Id.Value.Value,
+                Status = update.Status == UpdateStatus.Complete ? StatusCompleted : StatusCancelled,
+                Signature = update.Signature,
+                Description = update.Description.Value,
+                Metadata = update.Metadata.Value,
+                FailOnUpdateDone = options.FailOnUpdateDone
+            };
+        }
+    }
 }

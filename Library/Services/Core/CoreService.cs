@@ -41,19 +41,36 @@ namespace wpay.Library.Services.Core
                     host.Username(_rabbitUsername);
                     host.Password(_rabbitPassword);
                 });
-                sbc.ReceiveEndpoint(_rabbitEndpoint, ep => ep.Consumer<MessageConsumer>());
+                sbc.ReceiveEndpoint(_rabbitEndpoint, ep => 
+                {
+                    ep.Consumer(() => new MessageConsumer(_db));
+                });
 
             });
             await bus.StartAsync(); // This is important!
         }
 
-        public class MessageConsumer : IConsumer<CreateAccountCommand>, IConsumer<CreateTransactionCommand>, 
+        public class MessageConsumer : 
+            IConsumer<CreateAccountCommand>, 
+            IConsumer<CreateTransactionCommand>, 
+            IConsumer<UpdateTransactionCommand>
         {
+
+            private DbClient _db;
+            public MessageConsumer(DbClient db)
+            {
+                _db = db;
+            }
+
             public async Task Consume(ConsumeContext<CreateAccountCommand> context)
             {
 
             }
             public async Task Consume(ConsumeContext<CreateTransactionCommand> context)
+            {
+
+            }
+            public async Task Consume(ConsumeContext<UpdateTransactionCommand> context)
             {
 
             }
