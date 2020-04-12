@@ -15,13 +15,10 @@ namespace wpay.Library.Services.Core.Messages
         public string Currency { get; set; }
         public bool Locked { get; set; }
 
-        public bool IgnoreOnDuplicate { get; set; }
-
         public CreateAccount To()
         {
-            var options = new CreateAccountOptions();
-            options.IngoreOnDuplicate = IgnoreOnDuplicate;
-            return new CreateAccount(new AccountId(new UniqId(Id)), CurrencyFactory.New(Currency), Locked, options);
+
+            return new CreateAccount(new AccountId(new UniqId(Id)), CurrencyFactory.New(Currency), Locked);
         }
 
         public static CreateAccountCommand From(CreateAccount createAccount) =>
@@ -29,8 +26,7 @@ namespace wpay.Library.Services.Core.Messages
             {
                 Id = createAccount.Id.Value.Value,
                 Currency = createAccount.Currency.Code(),
-                Locked = createAccount.Locked,
-                IgnoreOnDuplicate = createAccount.Options.IngoreOnDuplicate
+                Locked = createAccount.Locked
             };
     }
 
@@ -47,10 +43,7 @@ namespace wpay.Library.Services.Core.Messages
         public string CreateAmountType {get;set;}
         public string CreateAmountCurrency {get;set;}
         public string CreateAmountValue {get;set;}
-
-        public bool FailOnExist {get;set;}
-
-        public (CreateTransaction, CreateTransactionOptions) To() 
+        public CreateTransaction To() 
         {
             var am = AmountFactory.New(CreateAmountValue, CreateAmountCurrency);
             CreateAmount createAmount = CreateAmountType switch
@@ -66,7 +59,7 @@ namespace wpay.Library.Services.Core.Messages
             var metadata = new TransactionMetadata();
             foreach(var kv in Metadata) metadata.Add(kv.Key, kv.Value);
             
-            var create = new CreateTransaction(
+            return new CreateTransaction(
                 new AccountId(new UniqId(AccountId)),
                 new TransactionId(new UniqId(Id)),
                 new TransactionLabel(Label),
@@ -75,13 +68,9 @@ namespace wpay.Library.Services.Core.Messages
                 descr,
                 metadata
             );
-
-            var options = new CreateTransactionOptions();
-            options.FailOnExist = FailOnExist;
-            return (create, options);
         }
 
-        public CreateTransactionCommand From(CreateTransaction create, CreateTransactionOptions options)
+        public CreateTransactionCommand From(CreateTransaction create)
         {   
             var (amtype, amcur, amvalue) = create.Amount switch
             {
@@ -114,9 +103,7 @@ namespace wpay.Library.Services.Core.Messages
         public Dictionary<string, ValueType> Metadata {get;set;}
         public Dictionary<string, string> Description {get;set;}
 
-        public bool FailOnUpdateDone {get;set;}
-
-        public (UpdateTransaction, UpdateTransactionOptions) To()
+        public UpdateTransaction To()
         {
             var descr = new TransactionDescription();
             foreach(var kv in Description) descr.Add(kv.Key, kv.Value);
@@ -124,19 +111,16 @@ namespace wpay.Library.Services.Core.Messages
             var metadata = new TransactionMetadata();
             foreach(var kv in Metadata) metadata.Add(kv.Key, kv.Value);
 
-            var update =  new UpdateTransaction(
+            return new UpdateTransaction(
                 new TransactionId(new UniqId(Id)),
                 Status == StatusCompleted ? UpdateStatus.Complete : UpdateStatus.Cancel,
                 Signature,
                 descr,
                 metadata 
             );
-            var options = new UpdateTransactionOptions();
-            options.FailOnUpdateDone = FailOnUpdateDone;
-            return (update, options);
         }
 
-        public UpdateTransactionCommand From(UpdateTransaction update, UpdateTransactionOptions options)
+        public UpdateTransactionCommand From(UpdateTransaction update)
         {
             return new UpdateTransactionCommand
             {
@@ -145,7 +129,6 @@ namespace wpay.Library.Services.Core.Messages
                 Signature = update.Signature,
                 Description = update.Description.Value,
                 Metadata = update.Metadata.Value,
-                FailOnUpdateDone = options.FailOnUpdateDone
             };
         }
     }

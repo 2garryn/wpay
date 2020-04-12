@@ -18,12 +18,11 @@ namespace wpay.Library.Services.Core.Commands
     }
     public class CreateAccount
     {
-        public CreateAccount(AccountId id, Currency currency, bool locked, CreateAccountOptions options) => 
-            (Id, Locked, Currency, Options) = (id, locked, currency, options);
+        public CreateAccount(AccountId id, Currency currency, bool locked) => 
+            (Id, Locked, Currency) = (id, locked, currency);
         public AccountId Id { get; }
         public Currency Currency { get; }
         public bool Locked { get; }
-        public CreateAccountOptions Options {get;}
         public override int GetHashCode() => Id.GetHashCode();
         public override bool Equals(object obj) =>
             obj switch 

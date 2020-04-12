@@ -17,8 +17,8 @@ namespace wpay.Library.Models
 
     public struct Amount
     {
-        private decimal _amount;
-        private Currency _currency;
+        private readonly decimal _amount;
+        private readonly Currency _currency;
         internal Amount(decimal amount, Currency currency)
         {
             _amount = amount;

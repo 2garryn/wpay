@@ -10,7 +10,7 @@ namespace wpay.Library.Libs.Db
 
     public class DbClient
     {
-        private string _connectionString;
+        private readonly string _connectionString;
         public DbClient(string host, string username, string password, string database)
         {
             var template = "Host={0};Username={1};Password={2};Database={3}";

@@ -18,9 +18,8 @@ namespace wpay.Library.Services.Core.Service
             _repo = repo;
         }
 
-        public async Task<Account> CreateAsync(CreateAccount create)
+        public async Task<Account> CreateAsync(CreateAccount create, CreateAccountOptions options)
         {
-
             var balance = AccountBalance.Zero(create.Currency);
             var acc = new Account(create.Id, balance, true);
             try
@@ -30,7 +29,7 @@ namespace wpay.Library.Services.Core.Service
             }
             catch (AccountUniqException)
             {
-                if (!create.Options.IngoreOnDuplicate)
+                if (!options.IngoreOnDuplicate)
                 {
                     var info = new Dictionary<string, string>()
                     {
@@ -65,7 +64,7 @@ namespace wpay.Library.Services.Core.Service
             try
             {
                 var acc = await _repo.GetAsync(id, true);
-                var newAcc = new Account(acc.Id, acc.Balance, acc.Locked);
+                var newAcc = new Account(acc.Id, acc.Balance, locked);
                 await _repo.UpdateAsync(newAcc);
             }
             catch (AccountNotFoundException)

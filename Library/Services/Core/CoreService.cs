@@ -2,12 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
 using Microsoft.Extensions.Configuration;
 using wpay.Library.Services.Core.Commands;
 using wpay.Library.Services.Core;
 using wpay.Library.Libs.Db;
 using wpay.Library.Services.Core.Models;
 using wpay.Library.Services.Core.Messages;
+using wpay.Library.Services.Core.Outbox;
+using wpay.Library.Exceptions;
 using MassTransit;
 
 namespace wpay.Library.Services.Core
@@ -41,22 +44,21 @@ namespace wpay.Library.Services.Core
                     host.Username(_rabbitUsername);
                     host.Password(_rabbitPassword);
                 });
-                sbc.ReceiveEndpoint(_rabbitEndpoint, ep => 
+                sbc.ReceiveEndpoint(_rabbitEndpoint, ep =>
                 {
                     ep.Consumer(() => new MessageConsumer(_db));
                 });
-
             });
             await bus.StartAsync(); // This is important!
         }
 
-        public class MessageConsumer : 
-            IConsumer<CreateAccountCommand>, 
-            IConsumer<CreateTransactionCommand>, 
+        public class MessageConsumer :
+            IConsumer<CreateAccountCommand>,
+            IConsumer<CreateTransactionCommand>,
             IConsumer<UpdateTransactionCommand>
         {
 
-            private DbClient _db;
+            private readonly DbClient _db;
             public MessageConsumer(DbClient db)
             {
                 _db = db;
@@ -64,40 +66,79 @@ namespace wpay.Library.Services.Core
 
             public async Task Consume(ConsumeContext<CreateAccountCommand> context)
             {
-
+                var create = context.Message.To();
+                var options = new CreateAccountOptions()
+                {
+                    IngoreOnDuplicate = true
+                };
+                await _db.ExecuteTransaction(async (conn, tx) =>
+                {
+                    var db = new Db(conn, tx);
+                    var core = new Service.Service(db);
+                    var acc = await core.CreateAsync(create, options);
+                    var repl = new EventReplicator(conn, tx);
+                    await repl.PutAsync(new AccountCreated(acc, context.ConversationId));
+                    tx.Commit();
+                });
             }
             public async Task Consume(ConsumeContext<CreateTransactionCommand> context)
             {
-
+                var create = context.Message.To();
+                var options = new CreateTransactionOptions()
+                {
+                    FailOnExist = false
+                };
+                await _db.ExecuteTransaction(async (conn, tx) =>
+                {
+                    var db = new Db(conn, tx);
+                    await db.SetSavePointAsync();
+                    var core = new Service.Service(db);
+                    var repl = new EventReplicator(conn, tx);
+                    try
+                    {
+                        var tran = await core.CreateAsync(create, options);
+                        await repl.PutAsync(new TransactionCreated(tran, context.ConversationId));
+                        tx.Commit();
+                    }
+                    catch(WPayException excp)
+                    {
+                        await db.RollbackToSavePointAsync();
+                        var errEvent = new ErrorRaised(excp.Message, excp.Info);
+                        await repl.PutAsync(errEvent);
+                        tx.Commit();
+                    }
+                });
             }
             public async Task Consume(ConsumeContext<UpdateTransactionCommand> context)
             {
-
+                var update = context.Message.To();
+                var options = new UpdateTransactionOptions()
+                {
+                    FailOnUpdateDone = false
+                };
+                await _db.ExecuteTransaction(async (conn, tx) =>
+                {
+                    var db = new Db(conn, tx);
+                    await db.SetSavePointAsync();
+                    var core = new Service.Service(db);
+                    var repl = new EventReplicator(conn, tx);
+                    try
+                    {
+                        var tran = await core.UpdateAsync(update, options);
+                        await repl.PutAsync(new TransactionUpdated(tran, context.ConversationId));
+                        tx.Commit();
+                    }
+                    catch(WPayException excp)
+                    {
+                        await db.RollbackToSavePointAsync();
+                        var errEvent = new ErrorRaised(excp.Message, excp.Info);
+                        await repl.PutAsync(errEvent);
+                        tx.Commit();
+                    }
+                });
             }
         }
 
-
-    /*
-
-        public async Task Handle(CreateAccount createAccount, CreateAccountOptions options, Action<string> error, Action<Account> ok)
-        {
-            await _db.ExecuteTransaction(async (conn, tx) =>
-            {
-                try
-                {
-                    var core = new Service.Service(new Db(conn, tx));
-                    var acc = await core.CreateAsync(createAccount, options);
-
-                    tx.Commit();
-
-                }
-                catch
-                {
-
-                }
-            });
-        }
-        */
 
     }
 

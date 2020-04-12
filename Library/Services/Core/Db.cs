@@ -25,9 +25,22 @@ namespace wpay.Library.Services.Core
 
     public class Db : ICoreRepository
     {
-        private IDbConnection _connection;
-        private IDbTransaction _tx;
+        private readonly IDbConnection _connection;
+        private readonly IDbTransaction _tx;
         public Db(IDbConnection connection, IDbTransaction tx) => (_connection, _tx) = (connection, tx);
+
+
+        public async Task SetSavePointAsync()
+        {
+            var query = "SAVEPOINT before_savepoint";
+            await _connection.ExecuteAsync(query, _tx);
+        }
+
+        public async Task RollbackToSavePointAsync()
+        {
+            var query = "ROLLBACK TO SAVEPOINT before_savepoint";
+            await _connection.ExecuteAsync(query, _tx);
+        }
 
         public async Task CreateAsync(Account account)
         {

@@ -17,7 +17,7 @@ namespace wpay.Library.Exceptions
         }
         public WPayException(string message, Dictionary<string, string> info) : base(message) { Info = info; }
         public Dictionary<string, string> Info { get; }
-        public override string ToString() => $"{Message}: {Info.ToString()}";
+        public override string ToString() => $"{Message}: {Info}";
     }
 
 
