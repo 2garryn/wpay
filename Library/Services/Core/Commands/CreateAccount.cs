@@ -30,8 +30,6 @@ namespace wpay.Library.Services.Core.Commands
                 CreateAccount create => create.Id.Equals(Id),
                 _ => false
             };
-
-        
     }
 
 

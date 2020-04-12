@@ -14,8 +14,9 @@ namespace wpay.Library.Services.Core.Outbox
         {
             
         }
-        public async Task PutAsync(object value)
+        public async Task PutAsync<T>(ICoreEvent<T> ev)
         {
+            
         }
     }
 
