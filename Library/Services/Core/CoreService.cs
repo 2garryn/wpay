@@ -66,20 +66,28 @@ namespace wpay.Library.Services.Core
 
             public async Task Consume(ConsumeContext<CreateAccountCommand> context)
             {
-                var create = context.Message.To();
-                var options = new CreateAccountOptions()
+                try
                 {
-                    IngoreOnDuplicate = true
-                };
-                await _db.ExecuteTransaction(async (conn, tx) =>
+                    Console.WriteLine("Received");
+                    var create = context.Message.To();
+                    var options = new CreateAccountOptions()
+                    {
+                        IngoreOnDuplicate = true
+                    };
+                    await _db.ExecuteTransaction(async (conn, tx) =>
+                    {
+                        var db = new Db(conn, tx);
+                        var core = new Service.Service(db);
+                        var acc = await core.CreateAsync(create, options);
+                        var repl = new EventReplicator(conn, tx);
+                        await repl.PutAsync(new AccountCreated(acc, context.ConversationId));
+                        tx.Commit();
+                    });
+                }
+                catch (Exception exc)
                 {
-                    var db = new Db(conn, tx);
-                    var core = new Service.Service(db);
-                    var acc = await core.CreateAsync(create, options);
-                    var repl = new EventReplicator(conn, tx);
-                    await repl.PutAsync(new AccountCreated(acc, context.ConversationId));
-                    tx.Commit();
-                });
+                    Console.WriteLine(exc);
+                }
             }
             public async Task Consume(ConsumeContext<CreateTransactionCommand> context)
             {
@@ -99,13 +107,18 @@ namespace wpay.Library.Services.Core
                         var tran = await core.CreateAsync(create, options);
                         await repl.PutAsync(new TransactionCreated(tran, context.ConversationId));
                         tx.Commit();
+                        Console.WriteLine("Transaction createsd");
                     }
-                    catch(WPayException excp)
+                    catch (WPayException excp)
                     {
                         await db.RollbackToSavePointAsync();
-                        var errEvent = new ErrorRaised(excp.Message, excp.Info);
+                        var errEvent = new ErrorRaised(new ErrorValue(excp.Message, excp.Info), context.ConversationId);
                         await repl.PutAsync(errEvent);
                         tx.Commit();
+                    }
+                    catch(Exception ex)
+                    {
+                        Console.WriteLine(ex);
                     }
                 });
             }
@@ -128,10 +141,10 @@ namespace wpay.Library.Services.Core
                         await repl.PutAsync(new TransactionUpdated(tran, context.ConversationId));
                         tx.Commit();
                     }
-                    catch(WPayException excp)
+                    catch (WPayException excp)
                     {
                         await db.RollbackToSavePointAsync();
-                        var errEvent = new ErrorRaised(excp.Message, excp.Info);
+                        var errEvent = new ErrorRaised(new ErrorValue(excp.Message, excp.Info), context.ConversationId);
                         await repl.PutAsync(errEvent);
                         tx.Commit();
                     }

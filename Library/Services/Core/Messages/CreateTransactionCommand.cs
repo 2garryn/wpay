@@ -21,7 +21,7 @@ namespace wpay.Library.Services.Core.Messages
         public string CreateAmountType { get; set; }
         public string CreateAmountCurrency { get; set; }
         public string CreateAmountValue { get; set; }
-        public CreateTransactionCommand(CreateTransaction create)
+        public static CreateTransactionCommand From(CreateTransaction create)
         {
             var (amtype, amcur, amvalue) = create.Amount switch
             {
@@ -29,20 +29,24 @@ namespace wpay.Library.Services.Core.Messages
                 CreateAmountCompletedIncome am => (_completedIncome, am.Amount.Currency().Code(), am.Amount.ToString()),
                 _ => throw new InvalidOperationException("Invalid create transaction status")
             };
-            Id = create.Id.Value.Value;
-            AccountId = create.AccountId.Value.Value;
-            Label = create.Label.Value;
-            Metadata = create.Metadata.Value;
-            Description = create.Description.Value;
-            Signature = create.Signature;
-            CreateAmountType = amtype;
-            CreateAmountCurrency = amcur;
-            CreateAmountValue = amvalue;
+            return new CreateTransactionCommand
+            {
+                Id = create.Id.Value.Value,
+                AccountId = create.AccountId.Value.Value,
+                Label = create.Label.Value,
+                Metadata = create.Metadata.Value,
+                Description = create.Description.Value,
+                Signature = create.Signature,
+                CreateAmountType = amtype,
+                CreateAmountCurrency = amcur,
+                CreateAmountValue = amvalue
+            };
         }
 
 
         public CreateTransaction To()
         {
+            Console.WriteLine("My Value {0} {1} {2}", CreateAmountValue, CreateAmountCurrency, CreateAmountType);
             var am = AmountFactory.New(CreateAmountValue, CreateAmountCurrency);
             CreateAmount createAmount = CreateAmountType switch
             {

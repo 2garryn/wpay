@@ -14,16 +14,19 @@ namespace wpay.Library.Services.Core.Messages
         public string Currency { get; set; }
         public bool Locked { get; set; }
 
-        public CreateAccountCommand(CreateAccount createAccount)
+        public static CreateAccountCommand From(CreateAccount createAccount)
         {
-            Id = createAccount.Id.Value.Value;
-            Currency = createAccount.Currency.Code();
-            Locked = createAccount.Locked;
+            return new CreateAccountCommand
+            {
+                Id = createAccount.Id.Value.Value,
+                Currency = createAccount.Currency.Code(),
+                Locked = createAccount.Locked,
+            };
         }
-        public CreateAccount To() => 
+        public CreateAccount To() =>
             new CreateAccount(
-                new AccountId(new UniqId(Id)), 
-                CurrencyFactory.New(Currency), 
+                new AccountId(new UniqId(Id)),
+                CurrencyFactory.New(Currency),
                 Locked
             );
     }

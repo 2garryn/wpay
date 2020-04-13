@@ -27,6 +27,7 @@ namespace wpay.Library.Models
         public bool IsZero() => _amount == 0;
         public Currency Currency() => _currency;
         public decimal ToDecimal() => _amount;
+        public override string ToString() => _amount.ToString();
 
         public static Amount operator +(Amount a1, Amount a2) => VerifyCurrency<Amount>(a1, a2, new Amount(a1._amount + a2._amount, a1._currency));
         public static Amount operator -(Amount a1, Amount a2)
@@ -42,6 +43,8 @@ namespace wpay.Library.Models
         public static bool operator <(Amount a1, Amount a2) => VerifyCurrency<bool>(a1, a2, a1._amount < a2._amount);
         public static bool operator >=(Amount a1, Amount a2) => VerifyCurrency<bool>(a1, a2, a1._amount >= a2._amount);
         public static bool operator <=(Amount a1, Amount a2) => VerifyCurrency<bool>(a1, a2, a1._amount <= a2._amount);
+        public static bool operator ==(Amount a1, Amount a2) => VerifyCurrency<bool>(a1, a2, a1._amount == a2._amount);
+        public static bool operator !=(Amount a1, Amount a2) => VerifyCurrency<bool>(a1, a2, a1._amount != a2._amount);
 
         
 

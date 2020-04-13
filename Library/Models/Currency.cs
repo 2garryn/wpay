@@ -19,6 +19,9 @@ namespace wpay.Library.Models
                 _ => false
             };
         public override int GetHashCode() => Code().GetHashCode();
+
+        public static bool operator ==(Currency c1, Currency c2) => c1.Code() == c2.Code();
+        public static bool operator !=(Currency c1, Currency c2) => c1.Code() != c2.Code();
         
     }
 

@@ -20,7 +20,9 @@ namespace wpay.Library.Libs.Db
 
         public async Task ExecuteTransaction(Func<IDbConnection, IDbTransaction, Task> act)
         {
+            Console.WriteLine(_connectionString);
             using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
             using var tx = connection.BeginTransaction();
             await act(connection, tx);
             await connection.CloseAsync();

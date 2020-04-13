@@ -19,7 +19,10 @@ namespace wpay.Library.Services.Core.Service
             var balance = tran.Amount switch
             {
                 AmountIncomeCompleted am => account.Balance + am,
-                AmountOutcomeProcessing am when account.Balance < am => throw new WPayException(TransactionErrors.NotEnoughMoney),
+                AmountOutcomeProcessing am when account.Balance < am => throw new WPayException(TransactionErrors.NotEnoughMoney, new Dictionary<string, string>() {
+                    {"TransactionId", tran.Id.Value.Value.ToString()},
+                    {"AccountId", tran.AccountId.Value.Value.ToString()}
+                }),
                 AmountOutcomeProcessing am => account.Balance - am,
                 _ => throw new InvalidOperationException("Invalid amount")
             };

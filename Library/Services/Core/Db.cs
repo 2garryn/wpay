@@ -44,21 +44,28 @@ namespace wpay.Library.Services.Core
         {
             try
             {
-                var exec = "INSERT INTO \"Accounts\" (Id, Balance, Currency, Locked) VALUES (@Id, @Balance, @Currency, @Locked)";
+                var exec = "INSERT INTO account (Id, Balance, Currency, Locked) VALUES (@Id, @Balance, @Currency, @Locked)";
                 var schema = AccountSchema.From(account);
                 await _connection.ExecuteAsync(exec, schema, _tx);
+                Console.WriteLine("Created Account {0}", account.Id.Value.Value.ToString());
             }
             catch (PostgresException pgEx)
             {
+                Console.WriteLine("Account create exception", account.Id.Value.Value.ToString());
                 if (pgEx.SqlState == PostgresErrorCodes.UniqueViolation)
                 {
                     throw new AccountUniqException("Account already exist", account.Id);
+                } 
+                else 
+                {
+                    throw pgEx;
                 }
             }
         }
         public async Task<Account> GetAsync(AccountId id, bool forUpdate = false)
         {
-            var query = forUpdate ? "SELECT * FROM \"Accounts\" WHERE Id = @Id FOR UPDATE" : "SELECT * FROM \"Accounts\" WHERE Id = @Id";
+            Console.WriteLine("Receive account {0}", id.Value.Value);
+            var query = forUpdate ? "SELECT * FROM account WHERE Id = @Id FOR UPDATE" : "SELECT * FROM accounts WHERE Id = @Id";
             var acc = await _connection.QuerySingleOrDefaultAsync<AccountSchema>(query, new {Id = id.Value.Value}, _tx);
             var _ = acc ?? throw new AccountNotFoundException("Account not found", id);
             return acc.To();
@@ -66,7 +73,7 @@ namespace wpay.Library.Services.Core
         }
         public async Task<Dictionary<AccountId, Account>> GetAsync(HashSet<AccountId> id, bool forUpdate)
         {
-            var query = forUpdate ? "SELECT * FROM \"Accounts\" WHERE Id IN {0} FOR UPDATE" : "SELECT * FROM \"Accounts\" WHERE Id IN {0}";
+            var query = forUpdate ? "SELECT * FROM account WHERE Id IN {0} FOR UPDATE" : "SELECT * FROM account WHERE Id IN {0}";
             var uuids = id.Select(id => id.Value.Value).ToList();
             query = String.Format(query, String.Join(",", uuids));
             return (await _connection.QueryAsync<AccountSchema>(query, _tx))
@@ -76,7 +83,7 @@ namespace wpay.Library.Services.Core
         public async Task UpdateAsync(Account account)
         {
             var schema = AccountSchema.From(account);
-            var query = "UPDATE \"Accounts\" SET Balance = @Balance, Currency = @Currency, Locked = @Locked WHERE Id = @Id";
+            var query = "UPDATE account SET Balance = @Balance, Currency = @Currency, Locked = @Locked WHERE Id = @Id";
             var affectedRows = await _connection.ExecuteAsync(query, schema, _tx);
             if(affectedRows != 1) 
             {
@@ -86,11 +93,13 @@ namespace wpay.Library.Services.Core
 
         public async Task CreateAsync(Transaction transaction)
         {
+            Console.WriteLine("Want to create transaaction");
             var schema = TransactionSchema.From(transaction);
-            var query = "INSERT INTO \"Transactions\" (Id, AccountId, Label, Status, Amount, Currency, Description, Metadata, CreatedOn, UpdatedOn) VALUES (@Id, @AccountId, @Label, @Status, @Amount, @Currency, @Description, @Metadata, @CreatedOn, @UpdatedOn)";
+            var query = "INSERT INTO transaction (Id, AccountId, Label, Status, Amount, Currency, Description, Metadata, CreatedOn, UpdatedOn) VALUES (@Id, @AccountId, @Label, CAST(@Status AS TRANSACTION_STATUS), @Amount, @Currency, CAST(@Description AS json), CAST(@Metadata AS json), @CreatedOn, @UpdatedOn)";
             try
             {
                 await _connection.ExecuteAsync(query, schema, _tx);
+                Console.WriteLine("Transaction created");
             }
             catch (PostgresException pgEx)
             {
@@ -98,12 +107,16 @@ namespace wpay.Library.Services.Core
                 {
                     throw new TransactionUniqException("transaction already exist", transaction.Id);
                 }
+                else 
+                {
+                    throw pgEx;
+                }
             }
         }
         public async Task UpdateAsync(TransactionId id, ITransactionAmount amount, TransactionMetadata metadata, TransactionDescription description, DateTime updatedOn)
         {
             (decimal _, string _, string status) = TransactionSchema.ConvertAmount(amount);
-            var query = "UPDATE \"Transactions\" SET Status = @Status, Metadata = @Metadata, Description = @Description, UpdatedOn = @UpdatedOn WHERE Id = @Id";
+            var query = "UPDATE transaction SET Status = @Status, Metadata = @Metadata, Description = @Description, UpdatedOn = @UpdatedOn WHERE Id = @Id";
             var data = new 
             {
                 Id = id.Value.Value, 
@@ -119,7 +132,7 @@ namespace wpay.Library.Services.Core
         }
         public async Task<Transaction> GetAsync(TransactionId id, bool forUpdate)
         {
-            var query = forUpdate ? "SELECT * FROM \"Transactions\" WHERE Id = @Id FOR UPDATE" : "SELECT * FROM \"Transactions\" WHERE Id = @Id";
+            var query = forUpdate ? "SELECT * FROM transaction WHERE Id = @Id FOR UPDATE" : "SELECT * FROM \"Transactions\" WHERE Id = @Id";
             var acc = await _connection.QuerySingleOrDefaultAsync<TransactionSchema>(query, new {Id = id.Value.Value}, _tx);
             var _ = acc ?? throw new TransactionNotFoundException("Transaction not found", id);
             return acc.To();
@@ -127,7 +140,7 @@ namespace wpay.Library.Services.Core
     
         public async Task<IEnumerable<Transaction>> ListAsync(AccountId id, TransactionListOptions options)
         {
-            var query = "SELECT * FROM \"Transactions\" WHERE AccountId = @AccountId AND StartDate >= @StartDate AND EndDate < @EndDate";
+            var query = "SELECT * FROM transaction WHERE AccountId = @AccountId AND StartDate >= @StartDate AND EndDate < @EndDate";
             var pars = new { AccountId = id.Value.Value, StartDate = options.StartDate, EndDate = options.EndDate};
             return (await _connection.QueryAsync<TransactionSchema>(query, pars, _tx)).Select(schema => schema.To());
         }
