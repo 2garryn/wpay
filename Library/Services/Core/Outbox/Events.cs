@@ -6,53 +6,34 @@ using wpay.Library.Services.Core.Messages;
 
 namespace wpay.Library.Services.Core.Outbox
 {
-    public interface ICoreEvent<T>
-    {
-        Guid? ConversationId { get; set; }
-        T Event { get; set; }
-    }
+    public interface ICoreEvent{}
 
-    public class TransactionCreated : ICoreEvent<TransactionEvent>
+    public class TransactionCreated : ICoreEvent
     {
-        public Guid? ConversationId { get; set; }
         public TransactionEvent Event { get; set; }
-        public TransactionCreated(Transaction transaction, Guid? conversationId) =>
-            (ConversationId, Event) = (conversationId, new TransactionEvent(transaction));
     }
 
-    public class TransactionUpdated : ICoreEvent<TransactionEvent>
+    public class TransactionUpdated : ICoreEvent
     {
-        public Guid? ConversationId { get; set; }
         public TransactionEvent Event { get; set; }
-        public TransactionUpdated(Transaction transaction, Guid? conversationId) =>
-            (ConversationId, Event) = (conversationId, new TransactionEvent(transaction));
     }
 
-    public class AccountCreated : ICoreEvent<AccountEvent>
+    public class AccountCreated : ICoreEvent
     {
-        public Guid? ConversationId { get; set; }
         public AccountEvent Event { get; set; }
-        public AccountCreated(Account account, Guid? conversationId) =>
-            (ConversationId, Event) = (conversationId, new AccountEvent(account));
     }
 
-    public class AccountLocked : ICoreEvent<AccountEvent>
+    public class AccountLocked : ICoreEvent
     {
-        public Guid? ConversationId { get; set; }
         public AccountEvent Event { get; set; }
-        public AccountLocked(Account account, Guid? conversationId) =>
-            (ConversationId, Event) = (conversationId, new AccountEvent(account));
     }
 
-    public class AccountUnlocked : ICoreEvent<AccountEvent>
+    public class AccountUnlocked : ICoreEvent
     {
-        public Guid? ConversationId { get; set; }
         public AccountEvent Event { get; set; }
-        public AccountUnlocked(Account account, Guid? conversationId) =>
-            (ConversationId, Event) = (conversationId, new AccountEvent(account));
     }
 
-    public class ErrorRaised : ICoreEvent<ErrorValue>
+    public class ErrorRaised : ICoreEvent
     {
         public Guid? ConversationId { get; set; }
         public ErrorValue Event {get;set;}

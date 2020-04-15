@@ -64,38 +64,46 @@ namespace wpay.Library.Services.Core
                 _db = db;
             }
 
-            public async Task Consume(ConsumeContext<CreateAccountCommand> context)
-            {
-                try
+            public async Task Consume(ConsumeContext<CreateAccountCommand> context) =>
+                await Exec(async (core) =>
                 {
-                    Console.WriteLine("Received");
-                    var create = context.Message.To();
                     var options = new CreateAccountOptions()
                     {
                         IngoreOnDuplicate = true
                     };
-                    await _db.ExecuteTransaction(async (conn, tx) =>
+                    var acc = await core.CreateAsync(context.Message.To(), options);
+                    return new AccountCreated() { Event = new AccountEvent(acc) };
+                }, context.ConversationId);
+
+            public async Task Consume(ConsumeContext<CreateTransactionCommand> context) =>
+                await Exec(async (core) =>
+                {
+                    var options = new CreateTransactionOptions()
                     {
-                        var db = new Db(conn, tx);
-                        var core = new Service.Service(db);
-                        var acc = await core.CreateAsync(create, options);
-                        var repl = new EventReplicator(conn, tx);
-                        await repl.PutAsync(new AccountCreated(acc, context.ConversationId));
-                        tx.Commit();
-                    });
-                }
-                catch (Exception exc)
+                        FailOnExist = false
+                    };
+                    var tran = await core.CreateAsync(context.Message.To(), options);
+                    return new TransactionCreated() { Event = new TransactionEvent(tran) };
+                },
+                context.ConversationId);
+
+            public async Task Consume(ConsumeContext<UpdateTransactionCommand> context) =>
+                await Exec(async (core) =>
                 {
-                    Console.WriteLine(exc);
-                }
-            }
-            public async Task Consume(ConsumeContext<CreateTransactionCommand> context)
+                    var options = new UpdateTransactionOptions()
+                    {
+                        FailOnUpdateDone = false
+                    };
+                    var tran = await core.UpdateAsync(context.Message.To(), options);
+                    return new TransactionUpdated() { Event = new TransactionEvent(tran) };
+                },
+                context.ConversationId);
+
+
+
+
+            private async Task Exec(Func<Service.Service, Task<ICoreEvent>> serv, Guid? convId)
             {
-                var create = context.Message.To();
-                var options = new CreateTransactionOptions()
-                {
-                    FailOnExist = false
-                };
                 await _db.ExecuteTransaction(async (conn, tx) =>
                 {
                     var db = new Db(conn, tx);
@@ -104,48 +112,15 @@ namespace wpay.Library.Services.Core
                     var repl = new EventReplicator(conn, tx);
                     try
                     {
-                        var tran = await core.CreateAsync(create, options);
-                        await repl.PutAsync(new TransactionCreated(tran, context.ConversationId));
-                        tx.Commit();
-                        Console.WriteLine("Transaction createsd");
-                    }
-                    catch (WPayException excp)
-                    {
-                        await db.RollbackToSavePointAsync();
-                        var errEvent = new ErrorRaised(new ErrorValue(excp.Message, excp.Info), context.ConversationId);
-                        await repl.PutAsync(errEvent);
-                        tx.Commit();
-                    }
-                    catch(Exception ex)
-                    {
-                        Console.WriteLine(ex);
-                    }
-                });
-            }
-            public async Task Consume(ConsumeContext<UpdateTransactionCommand> context)
-            {
-                var update = context.Message.To();
-                var options = new UpdateTransactionOptions()
-                {
-                    FailOnUpdateDone = false
-                };
-                await _db.ExecuteTransaction(async (conn, tx) =>
-                {
-                    var db = new Db(conn, tx);
-                    await db.SetSavePointAsync();
-                    var core = new Service.Service(db);
-                    var repl = new EventReplicator(conn, tx);
-                    try
-                    {
-                        var tran = await core.UpdateAsync(update, options);
-                        await repl.PutAsync(new TransactionUpdated(tran, context.ConversationId));
+                        var ev = await serv(core);
+                        await repl.PutAsync(ev, convId);
                         tx.Commit();
                     }
                     catch (WPayException excp)
                     {
                         await db.RollbackToSavePointAsync();
-                        var errEvent = new ErrorRaised(new ErrorValue(excp.Message, excp.Info), context.ConversationId);
-                        await repl.PutAsync(errEvent);
+                        var errEvent = new ErrorRaised(new ErrorValue(excp.Message, excp.Info), convId);
+                        await repl.PutAsync(errEvent, convId);
                         tx.Commit();
                     }
                 });

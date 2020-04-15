@@ -21,19 +21,26 @@ namespace wpay.Library.Services.Core.Outbox
             _connection = connection;
             _transaction = transaction;
         }
-        public async Task PutAsync<T>(ICoreEvent<T> ev)
+        public async Task PutAsync(object ev, Guid? convId)
         {
-            var query = "insert into outbox_replication (Id, Event) VALUES (@Id, CAST(@Event AS json))";
+            var query = "insert into outbox_replication (Id, EventType, Event) VALUES (@Id, @EventType, CAST(@Event AS json))";
             var options = new JsonSerializerOptions()
             {
                 IgnoreNullValues = false,
 
-
             };
-            var serializedEvent = JsonSerializer.Serialize<T>(ev.Event);
-            Console.WriteLine(serializedEvent);
-            byte[] barr = Encoding.UTF8.GetBytes(serializedEvent);
-            await _connection.ExecuteAsync(query, new { Id = ev.ConversationId, Event = serializedEvent }, _transaction);
+            var fqClassName = ev.GetType().FullName;
+            var serializedEvent = JsonSerializer.Serialize(ev) + ", Library";
+
+            Type myType1 = Type.GetType(fqClassName);
+            Console.WriteLine($"The full name is {myType1.FullName}.");
+            
+
+            await _connection.ExecuteAsync(query, new { Id = convId, Event = serializedEvent, EventType = fqClassName }, _transaction);
+
+
+
+            
         }
 
     }

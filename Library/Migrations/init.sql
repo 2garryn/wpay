@@ -31,5 +31,6 @@ CREATE TABLE transaction (
 
 CREATE TABLE outbox_replication (
     Id UUID PRIMARY KEY,
+    EventType TEXT NOT NULL,
     Event JSONB NOT NULL
 );
