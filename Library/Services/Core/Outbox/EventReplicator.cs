@@ -1,12 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Data;
 using System.Text.Json;
-using System.Text;
-using System.Text.Json.Serialization;
-using Npgsql;
 using Dapper;
 
 namespace wpay.Library.Services.Core.Outbox
@@ -29,18 +24,12 @@ namespace wpay.Library.Services.Core.Outbox
                 IgnoreNullValues = false,
 
             };
-            var fqClassName = ev.GetType().FullName;
-            var serializedEvent = JsonSerializer.Serialize(ev) + ", Library";
-
-            Type myType1 = Type.GetType(fqClassName);
-            Console.WriteLine($"The full name is {myType1.FullName}.");
-            
-
-            await _connection.ExecuteAsync(query, new { Id = convId, Event = serializedEvent, EventType = fqClassName }, _transaction);
-
-
-
-            
+            await _connection.ExecuteAsync(query, new 
+            { 
+                Id = convId, 
+                Event = JsonSerializer.Serialize(ev, options), 
+                EventType = ev.GetType().FullName 
+            }, _transaction);
         }
 
     }

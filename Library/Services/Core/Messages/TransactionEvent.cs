@@ -21,24 +21,8 @@ namespace wpay.Library.Services.Core.Messages
         public string AmountCurrency { get; set; }
         public string AmountValue { get; set; }
         public string AmountType { get; set; }
-        public DateTime CreatedOn {get;set;}
-        public DateTime UpdateOn {get;set;}
-        public TransactionEvent(Transaction transaction)
-        {
-            (AmountType, AmountCurrency, AmountValue) = transaction.Amount switch
-            {
-                AmountIncomeCompleted am => (_completedIncome, am.Amount.ToString(), am.Amount.Currency().Code()),
-                AmountOutcomeProcessing am => (_processingOutcome, am.Amount.ToString(), am.Amount.Currency().Code()),
-                AmountOutcomeCancelled am => (_cancelledOutcome, am.Amount.ToString(), am.Amount.Currency().Code()),
-                AmountOutcomeCompleted am => (_completedOutcome, am.Amount.ToString(), am.Amount.Currency().Code()),
-                _ => throw new Exception("Invalid amount")
-            };
-            Id = transaction.Id.Value.Value;
-            AccountId = transaction.AccountId.Value.Value;
-            Label = transaction.Label.Value;
-            Metadata = transaction.Metadata.Value;
-            Description = transaction.Description.Value;
-        }
+        public DateTime CreatedOn { get; set; }
+        public DateTime UpdateOn { get; set; }
 
         public Transaction To()
         {
@@ -67,6 +51,29 @@ namespace wpay.Library.Services.Core.Messages
                 CreatedOn,
                 UpdateOn
             );
+        }
+
+        public static TransactionEvent From(Transaction transaction)
+        {
+            var (amountType, amountCurrency, amountValue) = transaction.Amount switch
+            {
+                AmountIncomeCompleted am => (_completedIncome, am.Amount.ToString(), am.Amount.Currency().Code()),
+                AmountOutcomeProcessing am => (_processingOutcome, am.Amount.ToString(), am.Amount.Currency().Code()),
+                AmountOutcomeCancelled am => (_cancelledOutcome, am.Amount.ToString(), am.Amount.Currency().Code()),
+                AmountOutcomeCompleted am => (_completedOutcome, am.Amount.ToString(), am.Amount.Currency().Code()),
+                _ => throw new Exception("Invalid amount")
+            };
+            return new TransactionEvent
+            {
+                Id = transaction.Id.Value.Value,
+                AccountId = transaction.AccountId.Value.Value,
+                Label = transaction.Label.Value,
+                Metadata = transaction.Metadata.Value,
+                Description = transaction.Description.Value,
+                AmountType = amountType,
+                AmountCurrency = amountCurrency,
+                AmountValue = amountValue
+            };
         }
 
     }

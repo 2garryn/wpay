@@ -14,13 +14,6 @@ namespace wpay.Library.Services.Core.Messages
         public string Balance { get; set; }
         public bool Locked { get; set; }
         public string? Currency { get; set; }
-        public AccountEvent(Account account)
-        {
-            Id = account.Id.Value.Value;
-            Balance = account.Balance.Amount.ToString();
-            Currency = account.Balance.Amount.Currency().Code();
-            Locked = account.Locked;
-        }
 
         public Account To()
         {
@@ -30,8 +23,17 @@ namespace wpay.Library.Services.Core.Messages
                 Locked
             );
         }
-
-    }
-
+        public static AccountEvent From(Account account)
+        {
+            return new AccountEvent
+            {
+                Id = account.Id.Value.Value,
+                Balance = account.Balance.Amount.ToString(),
+                Currency = account.Balance.Amount.Currency().Code(),
+                Locked = account.Locked
+            };
+        }
+    };
 
 }
+

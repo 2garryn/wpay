@@ -72,7 +72,7 @@ namespace wpay.Library.Services.Core
                         IngoreOnDuplicate = true
                     };
                     var acc = await core.CreateAsync(context.Message.To(), options);
-                    return new AccountCreated() { Event = new AccountEvent(acc) };
+                    return new AccountCreated() { Event = AccountEvent.From(acc) };
                 }, context.ConversationId);
 
             public async Task Consume(ConsumeContext<CreateTransactionCommand> context) =>
@@ -83,7 +83,7 @@ namespace wpay.Library.Services.Core
                         FailOnExist = false
                     };
                     var tran = await core.CreateAsync(context.Message.To(), options);
-                    return new TransactionCreated() { Event = new TransactionEvent(tran) };
+                    return new TransactionCreated() { Event = TransactionEvent.From(tran) };
                 },
                 context.ConversationId);
 
@@ -95,12 +95,9 @@ namespace wpay.Library.Services.Core
                         FailOnUpdateDone = false
                     };
                     var tran = await core.UpdateAsync(context.Message.To(), options);
-                    return new TransactionUpdated() { Event = new TransactionEvent(tran) };
+                    return new TransactionUpdated() { Event = TransactionEvent.From(tran) };
                 },
                 context.ConversationId);
-
-
-
 
             private async Task Exec(Func<Service.Service, Task<ICoreEvent>> serv, Guid? convId)
             {
