@@ -7,11 +7,11 @@ using Dapper;
 namespace wpay.Library.Services.Core.Outbox
 {
 
-    public class EventReplicator
+    public class EventReplicateWriter
     {
         private readonly IDbConnection _connection;
         private readonly IDbTransaction _transaction;
-        public EventReplicator(IDbConnection connection, IDbTransaction transaction)
+        public EventReplicateWriter(IDbConnection connection, IDbTransaction transaction)
         {
             _connection = connection;
             _transaction = transaction;
@@ -24,9 +24,9 @@ namespace wpay.Library.Services.Core.Outbox
                 IgnoreNullValues = false,
 
             };
-            await _connection.ExecuteAsync(query, new 
+            await _connection.ExecuteAsync(query, new ReplicateEvent
             { 
-                Id = convId, 
+                Id = convId.Value, 
                 Event = JsonSerializer.Serialize(ev, options), 
                 EventType = ev.GetType().FullName 
             }, _transaction);
