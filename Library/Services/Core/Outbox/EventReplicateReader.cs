@@ -55,9 +55,30 @@ namespace wpay.Library.Services.Core.Outbox
             Console.WriteLine(ev.Event);
             var type = Type.GetType(ev.EventType);
             var deser = JsonSerializer.Deserialize(ev.Event, type);
-            await _bus.Publish(deser, context => context.ConversationId = ev.Id);
-        }
+            /*
+            var l = deser switch 
+            {
+                TransactionCreated cr => cr.Event.Label,
+                TransactionUpdated up => up.Event.Label,
+                _ => "any"
+            };
+            
+            
+            await _bus.Publish(deser, context => 
+            {
+                context.ConversationId = ev.Id;
+                context.SetRoutingKey(l);
+            });
+            */
 
+            await _bus.Publish(deser, context => 
+            {
+                context.ConversationId = ev.Id;
+                //context.
+            });
+            
+
+        }
 
     }
 

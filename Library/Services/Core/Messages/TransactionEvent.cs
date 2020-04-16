@@ -55,7 +55,7 @@ namespace wpay.Library.Services.Core.Messages
 
         public static TransactionEvent From(Transaction transaction)
         {
-            var (amountType, amountCurrency, amountValue) = transaction.Amount switch
+            var (amountType, amountValue, amountCurrency) = transaction.Amount switch
             {
                 AmountIncomeCompleted am => (_completedIncome, am.Amount.ToString(), am.Amount.Currency().Code()),
                 AmountOutcomeProcessing am => (_processingOutcome, am.Amount.ToString(), am.Amount.Currency().Code()),

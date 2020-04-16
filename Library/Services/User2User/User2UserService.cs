@@ -40,6 +40,16 @@ namespace wpay.Library.Services.User2User
                 });
                 sbc.ReceiveEndpoint(_rabbitEndpoint, ep =>
                 {
+                    /*
+                    ep.Bind(_rabbitEndpoint, s => 
+                    {
+                        s.RoutingKey = "user2user_source";
+
+                    ep.Bind(_rabbitEndpoint, s => 
+                    {
+                        s.RoutingKey = "user2user_destination";
+                    });
+                    */
                     ep.Consumer(() => new MessageConsumer());
                 });
             });
@@ -54,16 +64,7 @@ namespace wpay.Library.Services.User2User
             var convId = Guid.NewGuid();
             Console.WriteLine($"Publish create account with {accId.Value.Value} with convId = {convId} ");
             await bus.Publish(CreateAccountCommand.From(create), context => context.ConversationId = convId);
-            await Task.Delay(5000);
 
-            var createTran = new CreateTransaction(
-                accId,
-                new TransactionId(UniqId.New()),
-                new TransactionLabel("user2user_source"),
-                new CreateAmountCompletedIncome(AmountFactory.New("10.00", CurrencyFactory.New("MXN"))),
-                "asdasd"
-            );
-            await bus.Publish(CreateTransactionCommand.From(createTran));
 
 
 
