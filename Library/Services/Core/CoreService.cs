@@ -116,8 +116,7 @@ namespace wpay.Library.Services.Core
                     catch (WPayException excp)
                     {
                         await db.RollbackToSavePointAsync();
-                        var errEvent = new ErrorRaised(new ErrorValue(excp.Message, excp.Info), convId);
-                        await repl.PutAsync(errEvent, convId);
+                        await repl.PutAsync(new ErrorRaised{Error = excp.Message, Info = excp.Info}, convId);
                         tx.Commit();
                     }
                 });

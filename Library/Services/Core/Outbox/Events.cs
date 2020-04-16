@@ -35,24 +35,8 @@ namespace wpay.Library.Services.Core.Outbox
 
     public class ErrorRaised : ICoreEvent
     {
-        public Guid? ConversationId { get; set; }
-        public ErrorValue Event {get;set;}
-        public ErrorRaised(ErrorValue error, Guid? conversationId)
-        {
-            ConversationId = conversationId;
-            Event = error;
-
-        }
-    }
-
-    public class ErrorValue
-    {
         public string Error { get; set; }
         public Dictionary<string, string> Info { get; set; }
-        public ErrorValue(string error, Dictionary<string, string> info)
-        {
-            Error = error;
-            Info = info;
-        }
     }
+
 }
