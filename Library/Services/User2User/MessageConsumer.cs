@@ -14,9 +14,10 @@ namespace wpay.Library.Services.User2User
         
         public async Task Consume(ConsumeContext<AccountCreated> context)
         {
-            var ser = JsonSerializer.Serialize(context.Message);
-            Console.WriteLine(ser);
-            Console.WriteLine(context.ConversationId);
+            //var ser = JsonSerializer.Serialize(context.Message);
+            var acc = context.Message.Event.To();
+            Console.WriteLine($"Receive created account with {acc.Id.Value.Value} with convId = {context.ConversationId} ");
+
         }
     }
 

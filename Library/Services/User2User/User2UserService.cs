@@ -51,8 +51,9 @@ namespace wpay.Library.Services.User2User
                 CurrencyFactory.New("MXN"),
                 false
             );
-            Console.WriteLine("Published");
-            await bus.Publish(CreateAccountCommand.From(create));
+            var convId = Guid.NewGuid();
+            Console.WriteLine($"Publish create account with {accId.Value.Value} with convId = {convId} ");
+            await bus.Publish(CreateAccountCommand.From(create), context => context.ConversationId = convId);
             await Task.Delay(5000);
 
             var createTran = new CreateTransaction(

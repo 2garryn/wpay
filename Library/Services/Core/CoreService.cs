@@ -50,6 +50,11 @@ namespace wpay.Library.Services.Core
                 });
             });
             await bus.StartAsync(); // This is important!
+            await Task.Run(async () =>
+            {
+                var t = new EventReplicateReader(_db, bus);
+                await t.Replicate();
+            });
         }
 
         public class MessageConsumer :
