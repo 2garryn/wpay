@@ -106,7 +106,7 @@ namespace wpay.Library.Services.Core
                     var db = new Db(conn, tx);
                     await db.SetSavePointAsync();
                     var core = new Service.Service(db);
-                    var repl = new EventReplicator(conn, tx);
+                    var repl = new EventReplicateWriter(conn, tx);
                     try
                     {
                         var ev = await serv(core);

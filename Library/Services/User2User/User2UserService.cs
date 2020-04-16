@@ -38,7 +38,12 @@ namespace wpay.Library.Services.User2User
                     host.Username(_rabbitUsername);
                     host.Password(_rabbitPassword);
                 });
+                sbc.ReceiveEndpoint(_rabbitEndpoint, ep =>
+                {
+                    ep.Consumer(() => new MessageConsumer());
+                });
             });
+
             await bus.StartAsync(); // This is important!
             var accId = new AccountId(Models.UniqId.New());
             var create = new CreateAccount(
@@ -59,15 +64,15 @@ namespace wpay.Library.Services.User2User
             );
             await bus.Publish(CreateTransactionCommand.From(createTran));
 
-            
+
 
 
             //await bus.Publish(new Message { Text = "Hi", MyInt = new Message2 {Text2 = "sometined2", SomeInt = 123} });
 
-            Console.WriteLine("Press any key to exit");
-            await Task.Run(() => Console.ReadKey());
+          //  Console.WriteLine("Press any key to exit");
+           // await Task.Run(() => Console.ReadKey());
 
-            await bus.StopAsync();
+           // await bus.StopAsync();
         }
 
     }
