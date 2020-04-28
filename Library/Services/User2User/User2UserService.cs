@@ -38,20 +38,36 @@ namespace wpay.Library.Services.User2User
                     host.Username(_rabbitUsername);
                     host.Password(_rabbitPassword);
                 });
-                sbc.ReceiveEndpoint(_rabbitEndpoint, ep =>
+                sbc.ReceiveEndpoint(_rabbitEndpoint + "_account", ep =>
                 {
+
+                    ep.Consumer(() => new AccountMessageConsumer());
                     /*
-                    ep.Bind(_rabbitEndpoint, s => 
+                                        ep.Bind("core_transaction_created", s =>
+                                        {
+                                            s.RoutingKey = "user2user_source_asd";
+                                            s.ExchangeType = "direct";
+                                        });
+
+
+                                        */
+                });
+                sbc.ReceiveEndpoint(_rabbitEndpoint + "_transaction", ep =>
+                {
+                    ep.Consumer(() => new TransactionMessageConsumer());
+                    ep.Bind("core_transaction_created", s =>
                     {
                         s.RoutingKey = "user2user_source";
-
-                    ep.Bind(_rabbitEndpoint, s => 
+                        s.ExchangeType = "direct";
+                    });
+                    ep.Bind("core_transaction_created", s =>
                     {
                         s.RoutingKey = "user2user_destination";
+                        s.ExchangeType = "direct";
                     });
-                    */
-                    ep.Consumer(() => new MessageConsumer());
                 });
+
+
             });
 
             await bus.StartAsync(); // This is important!
@@ -71,10 +87,10 @@ namespace wpay.Library.Services.User2User
 
             //await bus.Publish(new Message { Text = "Hi", MyInt = new Message2 {Text2 = "sometined2", SomeInt = 123} });
 
-          //  Console.WriteLine("Press any key to exit");
-           // await Task.Run(() => Console.ReadKey());
+            //  Console.WriteLine("Press any key to exit");
+            // await Task.Run(() => Console.ReadKey());
 
-           // await bus.StopAsync();
+            // await bus.StopAsync();
         }
 
     }

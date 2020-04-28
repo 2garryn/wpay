@@ -13,7 +13,7 @@ using wpay.Library.Models;
 namespace wpay.Library.Services.User2User
 {
 
-    public class MessageConsumer: IConsumer<AccountCreated>, IConsumer<TransactionCreated>
+    public class AccountMessageConsumer: IConsumer<AccountCreated>
     {
 
         public async Task Consume(ConsumeContext<AccountCreated> context)
@@ -33,22 +33,23 @@ namespace wpay.Library.Services.User2User
             createTran = new CreateTransaction(
                 acc.Id,
                 new TransactionId(UniqId.New()),
-                new TransactionLabel("user2user_destionation"),
+                new TransactionLabel("user2user_destination"),
                 new CreateAmountCompletedIncome(AmountFactory.New("10.00", CurrencyFactory.New("MXN"))),
                 "asdasd"
             );
             await context.Publish(CreateTransactionCommand.From(createTran));
-
         }
+
+    }
+    public class TransactionMessageConsumer:  IConsumer<TransactionCreated>
+    {
+
         public async Task Consume(ConsumeContext<TransactionCreated> context)
         {
             //var ser = JsonSerializer.Serialize(context.Message);
             var tr = context.Message.Event.To();
             Console.WriteLine($"Receive created TRansaction with {tr.Id.Value.Value} with convId = {context.ConversationId} with type {tr.Label.Value} ");
-
-
         }
     }
-
 
 }

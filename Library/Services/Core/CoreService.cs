@@ -48,6 +48,16 @@ namespace wpay.Library.Services.Core
                 {
                     ep.Consumer(() => new MessageConsumer(_db));
                 });
+                sbc.Message<TransactionCreated>(x => x.SetEntityName("core_transaction_created"));
+                
+                sbc.Send<TransactionCreated>(x =>
+                {
+                    x.UseRoutingKeyFormatter(context => context.Message.Event.Label);
+                });
+
+                sbc.Publish<TransactionCreated>(x => x.ExchangeType = "direct");
+                
+
             });
             await bus.StartAsync(); // This is important!
             await Task.Run(async () =>
@@ -121,7 +131,7 @@ namespace wpay.Library.Services.Core
                     catch (WPayException excp)
                     {
                         await db.RollbackToSavePointAsync();
-                        await repl.PutAsync(new ErrorRaised{Error = excp.Message, Info = excp.Info}, convId);
+                        await repl.PutAsync(new ErrorRaised { Error = excp.Message, Info = excp.Info }, convId);
                         tx.Commit();
                     }
                 });
