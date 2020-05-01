@@ -8,8 +8,8 @@ namespace wpay.Library.Frameworks.PayQueue
     public class Context
     {
         public Guid ConversationId {get;}
-        public IPublisher Publisher {get;}
-        internal Context(Guid converstaionId, IPublisher publisher) =>
+        public Publisher Publisher {get;}
+        internal Context(Guid converstaionId, Publisher publisher) =>
             (ConversationId, Publisher) = (converstaionId, publisher);
 
     }
