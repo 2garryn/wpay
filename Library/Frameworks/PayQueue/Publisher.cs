@@ -10,26 +10,27 @@ namespace wpay.Library.Frameworks.PayQueue
 {
     using GetRoutePublishFunc = Func<Type, object, string>;
     using GetRouteSendFunc = Func<Type, Type, string>;
+
     public class Publisher
     {
-        private  GetRoutePublishFunc _publish;
-        private  GetRouteSendFunc _send;
-        private IExchangePublisher _publisher;
-        private Datagram _datagram;
+        private readonly GetRoutePublishFunc _publishRoute;
+        private readonly GetRouteSendFunc _sendRoute;
+        private readonly IExchangePublisher _publisher;
+        private readonly Datagram _datagram;
 
-        public Publisher(GetRoutePublishFunc publish, GetRouteSendFunc send, IExchangePublisher publisher, Datagram datagram) =>
-            (_publish, _send, _publisher, _datagram) = (publish, send, publisher, datagram);
+        public Publisher(GetRoutePublishFunc publishRoute, GetRouteSendFunc sendRoute, IExchangePublisher publisher, Datagram datagram) =>
+            (_publishRoute, _sendRoute, _publisher, _datagram) = (publishRoute, sendRoute, publisher, datagram);
 
-        public async Task Send<S, T>(T message) where S : IServiceDefinition, new() 
+        public async Task Send<S, T>(T message) where S : IServiceDefinition, new()
         {
-            var route = _send(typeof(S), typeof(T));
+            var route = _sendRoute(typeof(S), typeof(T));
             var binMessage = DoEncode<T>(message);
             await _publisher.PublishInput(route, binMessage);
         }
 
-        public async Task Publish<T>(T message) 
+        public async Task Publish<T>(T message)
         {
-            var route = _publish(typeof(T), message);
+            var route = _publishRoute(typeof(T), message);
             var binMessage = DoEncode<T>(message);
             await _publisher.PublishEvent(route, binMessage);
         }
@@ -45,6 +46,6 @@ namespace wpay.Library.Frameworks.PayQueue
             };
             return Encoding.UTF8.GetBytes(JsonSerializer.Serialize(datagram));
         }
-        
+
     }
 }

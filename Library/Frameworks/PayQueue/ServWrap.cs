@@ -15,9 +15,11 @@ namespace wpay.Library.Frameworks.PayQueue
         private readonly IQueueConsumer _consumer;
         private readonly Func<IServiceImpl<T>> _impl;
         private readonly string _prefix;
-        private PublisherFactory _publisherFactory;
+        private readonly PublisherFactory _publisherFactory;
+
         public ServWrap(IQueueConsumer consumer, Func<IServiceImpl<T>> impl, string prefix) =>
-            (_consumer, _impl, _prefix) = (consumer, impl, prefix);
+            (_consumer, _impl, _prefix, _publisherFactory) = (consumer, impl, prefix, new PublisherFactory());
+
         public void Prepare()
         {
             var def = new T();
@@ -25,7 +27,6 @@ namespace wpay.Library.Frameworks.PayQueue
             OnEventConsume(def);
             OnInputSend(def);
             OnEventPublish(def);
-            _publisherFactory = new PublisherFactory();
         }
 
         private void OnInputConsume(T def)
@@ -39,6 +40,7 @@ namespace wpay.Library.Frameworks.PayQueue
             var executor = new CallbackExecutor(inputConsume.ToImmutableDictionary(), _publisherFactory.ToPublisher);
             _consumer.RegisterInputConsumer(queue, executor);
         }
+
         private void OnEventConsume(T def)
         {
             var queue = _prefix + ":" + def.Label() + ":events";
@@ -60,6 +62,7 @@ namespace wpay.Library.Frameworks.PayQueue
             var executor = new CallbackExecutor(eventConsume.ToImmutableDictionary(), _publisherFactory.ToPublisher);
             _consumer.RegisterEventConsumer(queue, dispatch.ToArray(), executor);
         }
+
         private void OnInputSend(T def)
         {
             var inputSend = new Dictionary<Type, Dictionary<MessageType, string>>();
@@ -76,12 +79,9 @@ namespace wpay.Library.Frameworks.PayQueue
                     }
                     else
                     {
-                        messages = new Dictionary<MessageType, string>()
-                        {
-                            [t] = path
-                        };
+                        messages = new Dictionary<MessageType, string>() { [t] = path };
                         inputSend.Add(t, messages);
-                    }   
+                    }
                 }
             });
             _publisherFactory.InputSendRoutes = inputSend
@@ -102,9 +102,5 @@ namespace wpay.Library.Frameworks.PayQueue
             });
             _publisherFactory.EventRoutes = eventPublish.ToImmutableDictionary();
         }
-
     }
-
-
-
 }

@@ -1,18 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-/*
-input queue: service_label:input
-events queue: service_label:events
-
-input exchange: target_service_label:input
-events exchange: producer_service_label:events
-
-
-
-
-*/
-
 
 namespace wpay.Library.Frameworks.PayQueue
 {
@@ -28,4 +16,8 @@ namespace wpay.Library.Frameworks.PayQueue
         Task PublishInput(string endpoint, byte[] data);
     }
 
+    public interface IConsumeExecuter
+    {
+        Task Execute(IExchangePublisher exchangePublisher, byte[] data);
+    }
 }
