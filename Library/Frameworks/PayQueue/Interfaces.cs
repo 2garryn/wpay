@@ -38,7 +38,10 @@ namespace wpay.Library.Frameworks.PayQueue
     {
         Task EventConsume(T message, Context context);
     }
-
+    public interface IConsumeExecuter
+    {
+        Task Execute(IExchangePublisher exchangePublisher, byte[] data);
+    }
 
 
 

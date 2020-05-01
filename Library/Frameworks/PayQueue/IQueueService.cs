@@ -18,8 +18,8 @@ namespace wpay.Library.Frameworks.PayQueue
 {
     public interface IQueueConsumer
     {
-        void RegisterInputConsumer(string queue, Func<IExchangePublisher, byte[], Task> callback);
-        void RegisterEventConsumer(string queue, string[] dispatch, Func<IExchangePublisher, byte[], Task> callback); 
+        void RegisterInputConsumer(string queue, IConsumeExecuter executer);
+        void RegisterEventConsumer(string queue, string[] dispatch, IConsumeExecuter executer); 
     }
 
     public interface IExchangePublisher

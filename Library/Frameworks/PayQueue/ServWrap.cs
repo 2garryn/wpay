@@ -2,69 +2,109 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Immutable;
+using System.Text.Json;
 
 namespace wpay.Library.Frameworks.PayQueue
 {
     using MessageType = Type;
-    public class ServWrap
+    using CallbackAction = Func<object, Context, Task>;
+
+    public class ServWrap<T> where T : IServiceDefinition, new()
     {
-
-        public ServWrap()
+        private readonly IQueueConsumer _consumer;
+        private readonly Func<IServiceImpl<T>> _impl;
+        private readonly string _prefix;
+        private PublisherFactory _publisherFactory;
+        public ServWrap(IQueueConsumer consumer, Func<IServiceImpl<T>> impl, string prefix) =>
+            (_consumer, _impl, _prefix) = (consumer, impl, prefix);
+        public void Prepare()
         {
+            var def = new T();
+            OnInputConsume(def);
+            OnEventConsume(def);
+            OnInputSend(def);
+            OnEventPublish(def);
+            _publisherFactory = new PublisherFactory();
+        }
 
+        private void OnInputConsume(T def)
+        {
+            var queue = _prefix + ":" + def.Label() + ":input";
+            var inputConsume = new Dictionary<MessageType, CallbackAction>();
+            def.Configure(new ExecuteConfigurator(_impl)
+            {
+                OnInputConsume = (t, clb) => inputConsume.Add(t, clb)
+            });
+            var executor = new CallbackExecutor(inputConsume.ToImmutableDictionary(), _publisherFactory.ToPublisher);
+            _consumer.RegisterInputConsumer(queue, executor);
+        }
+        private void OnEventConsume(T def)
+        {
+            var queue = _prefix + ":" + def.Label() + ":events";
+            var eventConsume = new Dictionary<MessageType, CallbackAction>();
+            var dispatch = new HashSet<string>();
+            def.Configure(new ExecuteConfigurator(_impl)
+            {
+                OnEventConsume = (t, servdef, clb) =>
+                {
+                    eventConsume.Add(t, clb);
+                    dispatch.Add(_prefix + ":" + servdef.Label() + ":events");
+                },
+                OnEventConsumeRouted = (t, servdef, key, clb) =>
+                {
+                    eventConsume.Add(t, clb);
+                    dispatch.Add(_prefix + ":" + servdef.Label() + ":events:" + key);
+                }
+            });
+            var executor = new CallbackExecutor(eventConsume.ToImmutableDictionary(), _publisherFactory.ToPublisher);
+            _consumer.RegisterEventConsumer(queue, dispatch.ToArray(), executor);
+        }
+        private void OnInputSend(T def)
+        {
+            var inputSend = new Dictionary<Type, Dictionary<MessageType, string>>();
+            def.Configure(new ExecuteConfigurator(_impl)
+            {
+                OnInputSend = (t, servdef) =>
+                {
+                    var path = _prefix + ":" + servdef.Label() + ":input";
+                    var servtype = servdef.GetType();
+                    Dictionary<MessageType, string> messages;
+                    if (inputSend.TryGetValue(servtype, out messages))
+                    {
+                        messages.Add(t, path);
+                    }
+                    else
+                    {
+                        messages = new Dictionary<MessageType, string>()
+                        {
+                            [t] = path
+                        };
+                        inputSend.Add(t, messages);
+                    }   
+                }
+            });
+            _publisherFactory.InputSendRoutes = inputSend
+                .ToDictionary(k => k.Key, v => v.Value.ToImmutableDictionary())
+                .ToImmutableDictionary();
+        }
+
+        private void OnEventPublish(T def)
+        {
+            var eventPublish = new Dictionary<MessageType, Func<object, string>>();
+            var eventRoutePrefix = _prefix + ":" + def.Label() + ":events";
+            def.Configure(new ExecuteConfigurator(_impl)
+            {
+                OnEventPublish = (t) =>
+                    eventPublish.Add(t, (m) => eventRoutePrefix),
+                OnEventPublishRouted = (t, formatter) =>
+                    eventPublish.Add(t, (m) => eventRoutePrefix + ":" + formatter(m))
+            });
+            _publisherFactory.EventRoutes = eventPublish.ToImmutableDictionary();
         }
 
     }
 
-    public class Configurator2 : IConfigurator
-    {
-        private readonly Func<object> _servCreator;
-
-        internal Action<MessageType, Func<object, Context, Task>> OnInputConsume { get; set; }
-        internal Action<MessageType, IServiceDefinition, Func<object, Context, Task>> OnEventConsume { get; set; }
-        internal Action<MessageType, IServiceDefinition, string, Func<object, Context, Task>> OnEventConsumeRouted { get; set; }
-        internal Action<MessageType> OnEventPublish { get; set; }
-        internal Action<MessageType, Func<object, string>> OnEventPublishRouted { get; set; }
-        internal Action<MessageType, IServiceDefinition> OnInputSend { get; set; }
 
 
-        public Configurator2(Func<object> servCreator) => _servCreator = servCreator;
-
-        
-
-        public void InputConsume<T>() =>
-            OnInputConsume(typeof(T), async (object val, Context context) =>
-            {
-                await ((IInputConsumer<T>)_servCreator()).InputConsume((T)val, context);
-            });
-
-        public void EventConsume<S, T>() where S : IServiceDefinition, new() =>
-            OnEventConsume(typeof(T), new S(), async (object val, Context context) =>
-            {
-                await ((IEventConsumer<S, T>)_servCreator()).EventConsume((T)val, context);
-            });
-
-        public void EventConsume<S, T>(string key) where S : IServiceDefinition, new()
-        {
-            OnEventConsumeRouted(typeof(T), new S(), key, async (object val, Context context) =>
-            {
-                await ((IEventConsumer<S, T>)_servCreator()).EventConsume((T)val, context);
-            });
-        }
-
-        public void InputErrorPublish(string postfix) { }
-
-        public void InputSend<S, T>() where S : IServiceDefinition, new() => OnInputSend(typeof(T), new S());
-
-        public void EventPublish<T>() => OnEventPublish(typeof(T));
-
-
-        public void EventPublish<T>(Func<T, string> routeFormatter) =>
-            OnEventPublishRouted(typeof(T), (object o) =>
-            {
-                return routeFormatter((T) o);
-            });
-
-
-    }
 }
