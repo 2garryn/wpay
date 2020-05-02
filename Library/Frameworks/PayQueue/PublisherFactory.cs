@@ -8,20 +8,20 @@ namespace wpay.Library.Frameworks.PayQueue
     using MessageType = Type;
     public class PublisherFactory
     {
-        internal ImmutableDictionary<Type, ImmutableDictionary<MessageType, string>> InputSendRoutes {get;set;}
+        internal ImmutableDictionary<Type, ImmutableDictionary<MessageType, string>> CommandRoutes {get;set;}
         internal ImmutableDictionary<MessageType, Func<object, string>> EventRoutes {get;set;}
 
         public Publisher ToPublisher(IExchangePublisher publisher, Datagram datagram)
         {
             return new Publisher(
                 (t, obj) => EventRoutes[t](obj),
-                (st, tt) => InputSendRoutes[st][tt],
+                (st, tt) => CommandRoutes[st][tt],
                 publisher,
                 datagram
             );
         }
 
-        
+
 
     }
 

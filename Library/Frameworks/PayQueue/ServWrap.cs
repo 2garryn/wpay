@@ -23,37 +23,37 @@ namespace wpay.Library.Frameworks.PayQueue
         public void Prepare()
         {
             var def = new T();
-            OnInputConsume(def);
-            OnEventConsume(def);
-            OnInputSend(def);
-            OnEventPublish(def);
+            OnConsumeCommand(def);
+            OnConsumeEvent(def);
+            OnCommand(def);
+            OnPublishEvent(def);
         }
 
-        private void OnInputConsume(T def)
+        private void OnConsumeCommand(T def)
         {
-            var queue = _prefix + ":" + def.Label() + ":input";
-            var inputConsume = new Dictionary<MessageType, CallbackAction>();
+            var queue = _prefix + ":" + def.Label() + ":commands";
+            var commandConsume = new Dictionary<MessageType, CallbackAction>();
             def.Configure(new ExecuteConfigurator(_impl)
             {
-                OnInputConsume = (t, clb) => inputConsume.Add(t, clb)
+                OnConsumeCommand = (t, clb) => commandConsume.Add(t, clb)
             });
-            var executor = new CallbackExecutor(inputConsume.ToImmutableDictionary(), _publisherFactory.ToPublisher);
-            _consumer.RegisterInputConsumer(queue, executor);
+            var executor = new CallbackExecutor(commandConsume.ToImmutableDictionary(), _publisherFactory.ToPublisher);
+            _consumer.RegisterCommandConsumer(queue, executor);
         }
 
-        private void OnEventConsume(T def)
+        private void OnConsumeEvent(T def)
         {
             var queue = _prefix + ":" + def.Label() + ":events";
             var eventConsume = new Dictionary<MessageType, CallbackAction>();
             var dispatch = new HashSet<string>();
             def.Configure(new ExecuteConfigurator(_impl)
             {
-                OnEventConsume = (t, servdef, clb) =>
+                OnConsumeEvent = (t, servdef, clb) =>
                 {
                     eventConsume.Add(t, clb);
                     dispatch.Add(_prefix + ":" + servdef.Label() + ":events");
                 },
-                OnEventConsumeRouted = (t, servdef, key, clb) =>
+                OnConsumeEventRouted = (t, servdef, key, clb) =>
                 {
                     eventConsume.Add(t, clb);
                     dispatch.Add(_prefix + ":" + servdef.Label() + ":events:" + key);
@@ -63,41 +63,41 @@ namespace wpay.Library.Frameworks.PayQueue
             _consumer.RegisterEventConsumer(queue, dispatch.ToArray(), executor);
         }
 
-        private void OnInputSend(T def)
+        private void OnCommand(T def)
         {
-            var inputSend = new Dictionary<Type, Dictionary<MessageType, string>>();
+            var commands = new Dictionary<Type, Dictionary<MessageType, string>>();
             def.Configure(new ExecuteConfigurator(_impl)
             {
-                OnInputSend = (t, servdef) =>
+                OnCommand = (t, servdef) =>
                 {
-                    var path = _prefix + ":" + servdef.Label() + ":input";
+                    var path = _prefix + ":" + servdef.Label() + ":commands";
                     var servtype = servdef.GetType();
                     Dictionary<MessageType, string> messages;
-                    if (inputSend.TryGetValue(servtype, out messages))
+                    if (commands.TryGetValue(servtype, out messages))
                     {
                         messages.Add(t, path);
                     }
                     else
                     {
                         messages = new Dictionary<MessageType, string>() { [t] = path };
-                        inputSend.Add(t, messages);
+                        commands.Add(t, messages);
                     }
                 }
             });
-            _publisherFactory.InputSendRoutes = inputSend
+            _publisherFactory.CommandRoutes = commands
                 .ToDictionary(k => k.Key, v => v.Value.ToImmutableDictionary())
                 .ToImmutableDictionary();
         }
 
-        private void OnEventPublish(T def)
+        private void OnPublishEvent(T def)
         {
             var eventPublish = new Dictionary<MessageType, Func<object, string>>();
             var eventRoutePrefix = _prefix + ":" + def.Label() + ":events";
             def.Configure(new ExecuteConfigurator(_impl)
             {
-                OnEventPublish = (t) =>
+                OnPublishEvent = (t) =>
                     eventPublish.Add(t, (m) => eventRoutePrefix),
-                OnEventPublishRouted = (t, formatter) =>
+                OnPublishEventRouted = (t, formatter) =>
                     eventPublish.Add(t, (m) => eventRoutePrefix + ":" + formatter(m))
             });
             _publisherFactory.EventRoutes = eventPublish.ToImmutableDictionary();

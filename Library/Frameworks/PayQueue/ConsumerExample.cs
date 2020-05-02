@@ -11,24 +11,24 @@ namespace wpay.Library.Frameworks.PayQueue
         public string Label() => "exampleserv";
         public void Configure(IConfigurator configurator)
         {
-            configurator.InputConsume<MyMessage>();
-            configurator.EventConsume<PublServDef, MyMessage4>();
-            configurator.EventPublish<MyMessage2>();
-            configurator.EventPublish<MyMessage3>((ev) => ev.Label());
+            configurator.ConsumeCommand<MyMessage>();
+            configurator.ConsumeEvent<PublServDef, MyMessage4>();
+            configurator.PublishEvent<MyMessage2>();
+            configurator.PublishEvent<MyMessage3>((ev) => ev.Label());
         }
     }
 
 
     public class ExampleServ: 
         IServiceImpl<ExampleServDef>,
-        IInputConsumer<MyMessage>,
+        ICommandConsumer<MyMessage>,
         IEventConsumer<PublServDef, MyMessage2>
     {
-        public async Task InputConsume(MyMessage message, Context context)
+        public async Task ConsumeCommand(MyMessage message, Context context)
         {
 
         }
-        public async Task EventConsume(MyMessage2 message, Context context)
+        public async Task ConsumeEvent(MyMessage2 message, Context context)
         {
 
         }

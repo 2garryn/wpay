@@ -14,14 +14,17 @@ namespace wpay.Library.Frameworks.PayQueue
 
     public interface IConfigurator
     {
-        void InputConsume<T>();
-        void InputErrorPublish(string postfix);
+        void ConsumeCommand<T>();
+        void CommandErrorPublish(string postfix);
 
-        void EventConsume<S, T>() where S: IServiceDefinition, new();
-        void EventConsume<S, T>(string key) where S: IServiceDefinition, new();
-        void InputSend<S, T>() where S: IServiceDefinition, new();
-        void EventPublish<T>();
-        void EventPublish<T>(Func<T, string> routeFormatter);
+        void ConsumeEvent<S, T>() where S: IServiceDefinition, new();
+        void ConsumeEvent<S, T>(string key) where S: IServiceDefinition, new();
+
+        //void Call<T>(T command);
+
+        void Command<S, T>() where S: IServiceDefinition, new();
+        void PublishEvent<T>();
+        void PublishEvent<T>(Func<T, string> routeFormatter);
     }
 
 
@@ -29,19 +32,16 @@ namespace wpay.Library.Frameworks.PayQueue
     {
     }
 
-    public interface IInputConsumer<T>
+    public interface ICommandConsumer<T>
     {
-        Task InputConsume(T message, Context context);
+        Task ConsumeCommand(T message, Context context);
     }
 
     public interface IEventConsumer<S, T>
     {
-        Task EventConsume(T message, Context context);
+        Task ConsumeEvent(T message, Context context);
     }
-    public interface IConsumeExecuter
-    {
-        Task Execute(IExchangePublisher exchangePublisher, byte[] data);
-    }
+
 
 
 

@@ -9,23 +9,23 @@ using System.Text;
 namespace wpay.Library.Frameworks.PayQueue
 {
     using GetRoutePublishFunc = Func<Type, object, string>;
-    using GetRouteSendFunc = Func<Type, Type, string>;
+    using GetRouteCommandFunc = Func<Type, Type, string>;
 
     public class Publisher
     {
         private readonly GetRoutePublishFunc _publishRoute;
-        private readonly GetRouteSendFunc _sendRoute;
+        private readonly GetRouteCommandFunc _commandRoute;
         private readonly IExchangePublisher _publisher;
         private readonly Datagram _datagram;
 
-        public Publisher(GetRoutePublishFunc publishRoute, GetRouteSendFunc sendRoute, IExchangePublisher publisher, Datagram datagram) =>
-            (_publishRoute, _sendRoute, _publisher, _datagram) = (publishRoute, sendRoute, publisher, datagram);
+        public Publisher(GetRoutePublishFunc publishRoute, GetRouteCommandFunc commandRoute, IExchangePublisher publisher, Datagram datagram) =>
+            (_publishRoute, _commandRoute, _publisher, _datagram) = (publishRoute, commandRoute, publisher, datagram);
 
-        public async Task Send<S, T>(T message) where S : IServiceDefinition, new()
+        public async Task Command<S, T>(T message) where S : IServiceDefinition, new()
         {
-            var route = _sendRoute(typeof(S), typeof(T));
+            var route = _commandRoute(typeof(S), typeof(T));
             var binMessage = DoEncode<T>(message);
-            await _publisher.PublishInput(route, binMessage);
+            await _publisher.Command(route, binMessage);
         }
 
         public async Task Publish<T>(T message)
