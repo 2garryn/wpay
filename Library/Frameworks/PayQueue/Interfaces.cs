@@ -20,8 +20,6 @@ namespace wpay.Library.Frameworks.PayQueue
         void ConsumeEvent<S, T>() where S: IServiceDefinition, new();
         void ConsumeEvent<S, T>(string key) where S: IServiceDefinition, new();
 
-        //void Call<T>(T command);
-
         void Command<S, T>() where S: IServiceDefinition, new();
         void PublishEvent<T>();
         void PublishEvent<T>(Func<T, string> routeFormatter);
