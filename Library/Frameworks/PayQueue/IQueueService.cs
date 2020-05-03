@@ -8,6 +8,7 @@ namespace wpay.Library.Frameworks.PayQueue
     {
         void RegisterCommandConsumer(string queue, IConsumeExecuter executer);
         void RegisterEventConsumer(string queue, string[] dispatch, IConsumeExecuter executer); 
+        IExchangePublisher GetExchangePublisher();
     }
 
     public interface IExchangePublisher

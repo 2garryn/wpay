@@ -40,6 +40,10 @@ namespace wpay.Library.Frameworks.PayQueue
         Task ConsumeEvent(T message, Context context);
     }
 
+    public interface ICallParameters
+    {
+        Guid? ConversationId {set; get;}
+    }
 
 
 

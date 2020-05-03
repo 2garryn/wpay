@@ -11,19 +11,13 @@ namespace wpay.Library.Frameworks.PayQueue
         internal ImmutableDictionary<Type, ImmutableDictionary<MessageType, string>> CommandRoutes {get;set;}
         internal ImmutableDictionary<MessageType, Func<object, string>> EventRoutes {get;set;}
 
-        public Publisher ToPublisher(IExchangePublisher publisher, Datagram datagram)
+        public Publisher ToPublisher(IExchangePublisher publisher)
         {
             return new Publisher(
                 (t, obj) => EventRoutes[t](obj),
                 (st, tt) => CommandRoutes[st][tt],
-                publisher,
-                datagram
+                publisher
             );
         }
-
-
-
     }
-
-
 }

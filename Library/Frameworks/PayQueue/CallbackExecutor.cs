@@ -9,7 +9,7 @@ namespace wpay.Library.Frameworks.PayQueue
 {
     using CallbackAction = Func<object, Context, Task>;
     using MessageType = Type;
-    using ToPublisher = Func<IExchangePublisher, Datagram, Publisher>;
+    using ToPublisher = Func<IExchangePublisher, Publisher>;
     public class CallbackExecutor : IConsumeExecuter
     {
 
@@ -25,12 +25,21 @@ namespace wpay.Library.Frameworks.PayQueue
         public async Task Execute(IExchangePublisher exchangePublisher, byte[] data)
         {
             var datagram = JsonSerializer.Deserialize<Datagram>(data);
-            var publisher = _toPublisher(exchangePublisher, datagram);
-            var context = new Context(datagram.ConversationId, publisher);
+            var publisher = _toPublisher(exchangePublisher);
             var t = Type.GetType(datagram.Type);
             object deser = JsonSerializer.Deserialize(datagram.Message, t);
             var executor = _consumers.GetValueOrDefault(t, null!);
+            var context = DatagramToContext(datagram, publisher);
             await executor(deser, context);
+        }
+
+        private Context DatagramToContext(Datagram datagram, Publisher publisher)
+        {
+            return new Context(
+                datagram.Id,
+                datagram.OptionalParams.ConversationId,
+                publisher
+            );
         }
 
     }

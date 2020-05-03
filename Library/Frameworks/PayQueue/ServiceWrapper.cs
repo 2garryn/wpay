@@ -10,7 +10,7 @@ namespace wpay.Library.Frameworks.PayQueue
     using MessageType = Type;
     using CallbackAction = Func<object, Context, Task>;
 
-    public delegate TImpl ImplFactory<TImpl, TServDef>()
+    public delegate TImpl ImplFactory<TImpl, TServDef>(Context context)
             where TServDef : IServiceDefinition, new()
             where TImpl : IServiceImpl<TServDef>;
 
@@ -35,18 +35,30 @@ namespace wpay.Library.Frameworks.PayQueue
             OnCommand(def);
             OnPublishEvent(def);
         }
+        
+        public TImpl GetService() => 
+            GetService((ICallParameters p) => 
+            {
+                p.ConversationId = null;
+            });
 
-
-        public TImpl Service
+        public TImpl GetService(Action<ICallParameters> p)
         {
-            get { return _impl(); }
-        }
-
+            var callParameters = new CallParameters();
+            p(callParameters);
+            var context = new Context(
+                Guid.NewGuid(), 
+                callParameters.ConversationId,
+                _publisherFactory.ToPublisher(_consumer.GetExchangePublisher())
+            );
+            return _impl(context);
+        } 
+        
         private void OnConsumeCommand(TServDef def)
         {
             var queue = _prefix + ":" + def.Label() + ":commands";
             var commandConsume = new Dictionary<MessageType, CallbackAction>();
-            def.Configure(new ExecuteConfigurator(() => _impl())
+            def.Configure(new ExecuteConfigurator((c) => _impl(c))
             {
                 OnConsumeCommand = (t, clb) => commandConsume.Add(t, clb)
             });
@@ -59,7 +71,7 @@ namespace wpay.Library.Frameworks.PayQueue
             var queue = _prefix + ":" + def.Label() + ":events";
             var eventConsume = new Dictionary<MessageType, CallbackAction>();
             var dispatch = new HashSet<string>();
-            def.Configure(new ExecuteConfigurator(() => _impl())
+            def.Configure(new ExecuteConfigurator((c) => _impl(c))
             {
                 OnConsumeEvent = (t, servdef, clb) =>
                 {
@@ -79,7 +91,7 @@ namespace wpay.Library.Frameworks.PayQueue
         private void OnCommand(TServDef def)
         {
             var commands = new Dictionary<Type, Dictionary<MessageType, string>>();
-            def.Configure(new ExecuteConfigurator(() => _impl())
+            def.Configure(new ExecuteConfigurator((c) => _impl(c))
             {
                 OnCommand = (t, servdef) =>
                 {
@@ -106,7 +118,7 @@ namespace wpay.Library.Frameworks.PayQueue
         {
             var eventPublish = new Dictionary<MessageType, Func<object, string>>();
             var eventRoutePrefix = _prefix + ":" + def.Label() + ":events";
-            def.Configure(new ExecuteConfigurator(() => _impl())
+            def.Configure(new ExecuteConfigurator((c) => _impl(c))
             {
                 OnPublishEvent = (t) =>
                     eventPublish.Add(t, (m) => eventRoutePrefix),
