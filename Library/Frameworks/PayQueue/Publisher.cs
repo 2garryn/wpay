@@ -20,13 +20,12 @@ namespace wpay.Library.Frameworks.PayQueue
         public Publisher(GetRoutePublishFunc publishRoute, GetRouteCommandFunc commandRoute, IExchangePublisher publisher) =>
             (_publishRoute, _commandRoute, _publisher) = (publishRoute, commandRoute, publisher);
 
-        public async Task Command<S, T>(T message) where S : IServiceDefinition, new()
-        {
+        public async Task Command<S, T>(T message) where S : IServiceDefinition, new() =>
             await Command<S, T>(message, (ICallParameters parameters) => 
             {
                 parameters.ConversationId = null;
             });
-        }
+        
 
         public async Task Command<S, T>(T message, Action<ICallParameters> parameters) where S : IServiceDefinition, new()
         {
@@ -35,13 +34,12 @@ namespace wpay.Library.Frameworks.PayQueue
             await _publisher.Command(route, binMessage);
         }
 
-        public async Task Publish<T>(T message)
-        {
+        public async Task Publish<T>(T message) =>
             await Publish<T>(message, (ICallParameters parameters) => 
             {
                 parameters.ConversationId = null;
             });
-        }
+        
 
         public async Task Publish<T>(T message, Action<ICallParameters> parameters)
         {
