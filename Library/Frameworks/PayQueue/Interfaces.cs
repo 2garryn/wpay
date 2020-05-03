@@ -32,12 +32,12 @@ namespace wpay.Library.Frameworks.PayQueue
 
     public interface ICommandConsumer<T>
     {
-        Task ConsumeCommand(T message, Context context);
+        Task ConsumeCommand(T message);
     }
 
     public interface IEventConsumer<S, T>
     {
-        Task ConsumeEvent(T message, Context context);
+        Task ConsumeEvent(T message);
     }
 
     public interface ICallParameters

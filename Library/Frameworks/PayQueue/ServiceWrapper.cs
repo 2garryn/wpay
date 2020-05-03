@@ -35,9 +35,9 @@ namespace wpay.Library.Frameworks.PayQueue
             OnCommand(def);
             OnPublishEvent(def);
         }
-        
-        public TImpl GetService() => 
-            GetService((ICallParameters p) => 
+
+        public TImpl GetService() =>
+            GetService((ICallParameters p) =>
             {
                 p.ConversationId = null;
             });
@@ -46,24 +46,32 @@ namespace wpay.Library.Frameworks.PayQueue
         {
             var callParameters = new CallParameters();
             p(callParameters);
+
             var context = new Context(
-                Guid.NewGuid(), 
+                Guid.NewGuid(),
                 callParameters.ConversationId,
                 _publisherFactory.ToPublisher(_consumer.GetExchangePublisher())
             );
             return _impl(context);
-        } 
-        
+        }
+
         private void OnConsumeCommand(TServDef def)
         {
             var queue = _prefix + ":" + def.Label() + ":commands";
             var commandConsume = new Dictionary<MessageType, CallbackAction>();
             def.Configure(new ExecuteConfigurator((c) => _impl(c))
             {
-                OnConsumeCommand = (t, clb) => commandConsume.Add(t, clb)
+                OnConsumeCommand = (t, clb) =>
+                {
+
+                    commandConsume.Add(t, clb);
+                } 
             });
-            var executor = new CallbackExecutor(commandConsume.ToImmutableDictionary(), _publisherFactory.ToPublisher);
-            _consumer.RegisterCommandConsumer(queue, executor);
+            if (commandConsume.Count() > 0)
+            {
+                var executor = new CallbackExecutor(commandConsume.ToImmutableDictionary(), _publisherFactory.ToPublisher);
+                _consumer.RegisterCommandConsumer(queue, executor);
+            }
         }
 
         private void OnConsumeEvent(TServDef def)
@@ -84,8 +92,11 @@ namespace wpay.Library.Frameworks.PayQueue
                     dispatch.Add(_prefix + ":" + servdef.Label() + ":events:" + key);
                 }
             });
-            var executor = new CallbackExecutor(eventConsume.ToImmutableDictionary(), _publisherFactory.ToPublisher);
-            _consumer.RegisterEventConsumer(queue, dispatch.ToArray(), executor);
+            if (eventConsume.Count() > 0)
+            {
+                var executor = new CallbackExecutor(eventConsume.ToImmutableDictionary(), _publisherFactory.ToPublisher);
+                _consumer.RegisterEventConsumer(queue, dispatch.ToArray(), executor);
+            }
         }
 
         private void OnCommand(TServDef def)
@@ -105,10 +116,11 @@ namespace wpay.Library.Frameworks.PayQueue
                     else
                     {
                         messages = new Dictionary<MessageType, string>() { [t] = path };
-                        commands.Add(t, messages);
+                        commands.Add(servtype, messages);
                     }
                 }
             });
+            
             _publisherFactory.CommandRoutes = commands
                 .ToDictionary(k => k.Key, v => v.Value.ToImmutableDictionary())
                 .ToImmutableDictionary();

@@ -6,65 +6,78 @@ using System.Threading.Tasks;
 namespace wpay.Library.Frameworks.PayQueue
 {
 
-    public class ExampleServDef : IServiceDefinition
+    public class RequestServiceDefinition: IServiceDefinition
     {
-        public string Label() => "exampleserv";
+        public string Label() => "requestservice";
         public void Configure(IConfigurator configurator)
         {
-            configurator.ConsumeCommand<MyMessage>();
-            configurator.ConsumeEvent<PublServDef, MyMessage4>();
-            configurator.PublishEvent<MyMessage2>();
-            configurator.PublishEvent<MyMessage3>((ev) => ev.Label());
+            configurator.Command<RespServDef, Command1>();
+            configurator.PublishEvent<Notify1>();
         }
     }
-
-
-    public class ExampleServ: 
-        IServiceImpl<ExampleServDef>,
-        ICommandConsumer<MyMessage>,
-        IEventConsumer<PublServDef, MyMessage2>
+    
+    public class RequestServiceImpl:
+        IServiceImpl<RequestServiceDefinition>
     {
-        public async Task ConsumeCommand(MyMessage message, Context context)
-        {
+        private readonly Context _context;
+        public RequestServiceImpl(Context context) => _context = context;
 
+        public async Task MakeCommand()
+        {
+            await _context.Publisher.Command<RespServDef, Command1>(new Command1
+            {
+                CommandField1 = "haha command"
+            });
         }
-        public async Task ConsumeEvent(MyMessage2 message, Context context)
-        {
 
+        public async Task MakeEvent()
+        {
+            await _context.Publisher.Publish(new Notify1
+            {
+                NotifyField1 = "haha notifu"
+            });
         }
     }
 
+    public class RespServDef: IServiceDefinition
+    {
+        public string Label() => "responseserv";
+        public void Configure(IConfigurator configurator)
+        {
+            configurator.ConsumeCommand<Command1>();
+            configurator.ConsumeEvent<RequestServiceDefinition, Notify1>();
+        }
+    }
 
+    public class RespServImpl: 
+        IServiceImpl<RespServDef>,
+        ICommandConsumer<Command1>,
+        IEventConsumer<RequestServiceDefinition, Notify1>
+    {
+        private readonly Context _context;
+        public RespServImpl(Context context) => _context = context;
 
+        public async Task ConsumeCommand(Command1 command)
+        {
+            Console.WriteLine($"Consumed command {command.CommandField1}");
+        }
+
+        public async Task ConsumeEvent(Notify1 notify)
+        {
+            Console.WriteLine($"Consumed event {notify.NotifyField1}");
+        }
+    }
 
 
     
 
-
-    public class MyMessage {}
-    public class MyMessage2 {}
-    public class MyMessage3 
+    public class Command1
     {
-        public string Label() => "asda";
+        public string CommandField1 {get;set;}
     }
-
-    public class MyMessage4 
+    public class Notify1
     {
-        public string MyType() => "asda";
+        public string NotifyField1 {get;set;}
     }
-
-    public class PublServDef : IServiceDefinition
-    {
-        public string Label() => "publeserv";
-        public void Configure(IConfigurator configurator)
-        {
-
-        }
-    }
-
-
-
-
-
 
 }

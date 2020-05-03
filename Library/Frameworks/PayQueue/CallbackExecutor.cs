@@ -12,8 +12,6 @@ namespace wpay.Library.Frameworks.PayQueue
     using ToPublisher = Func<IExchangePublisher, Publisher>;
     public class CallbackExecutor : IConsumeExecuter
     {
-
-
         private readonly ImmutableDictionary<MessageType, CallbackAction> _consumers;
         private readonly ToPublisher _toPublisher;
         public CallbackExecutor(ImmutableDictionary<MessageType, CallbackAction> consumers, ToPublisher toPublisher)

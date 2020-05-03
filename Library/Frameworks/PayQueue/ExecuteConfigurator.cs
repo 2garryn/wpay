@@ -22,19 +22,19 @@ namespace wpay.Library.Frameworks.PayQueue
         public void ConsumeCommand<T>() =>
             OnConsumeCommand?.Invoke(typeof(T), async (object val, Context context) =>
             {
-                await ((ICommandConsumer<T>)_servCreator(context)).ConsumeCommand((T)val, context);
+                await ((ICommandConsumer<T>)_servCreator(context)).ConsumeCommand((T)val);
             });
 
         public void ConsumeEvent<S, T>() where S : IServiceDefinition, new() =>
             OnConsumeEvent?.Invoke(typeof(T), new S(), async (object val, Context context) =>
             {
-                await ((IEventConsumer<S, T>)_servCreator(context)).ConsumeEvent((T)val, context);
+                await ((IEventConsumer<S, T>)_servCreator(context)).ConsumeEvent((T)val);
             });
 
         public void ConsumeEvent<S, T>(string key) where S : IServiceDefinition, new() =>
             OnConsumeEventRouted?.Invoke(typeof(T), new S(), key, async (object val, Context context) =>
             {
-                await ((IEventConsumer<S, T>)_servCreator(context)).ConsumeEvent((T)val, context);
+                await ((IEventConsumer<S, T>)_servCreator(context)).ConsumeEvent((T)val);
             });
         
         public void CommandErrorPublish(string postfix) { }
