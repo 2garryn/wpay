@@ -60,11 +60,13 @@ namespace wpay.Library.Frameworks.PayQueue
         public async Task ConsumeCommand(Command1 command)
         {
             Console.WriteLine($"Consumed command {command.CommandField1}");
+            await Task.Yield();
         }
 
         public async Task ConsumeEvent(Notify1 notify)
         {
             Console.WriteLine($"Consumed event {notify.NotifyField1}");
+            await Task.Yield();
         }
     }
 
