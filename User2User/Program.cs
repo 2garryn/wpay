@@ -1,129 +1,56 @@
 ﻿using System;
 using Microsoft.Extensions.Configuration;
-using wpay.Library.Services.User2User;
 using System.Threading.Tasks;
-using System.Text.Json;
 using System.Text;
-using System.Text.Json.Serialization;
-using System.Runtime.Serialization;
+using wpay.Library.Services.User2User;
+using wpay.Library.Frameworks.PayQueue.RabbitMqConsumer;
+using wpay.Library.Frameworks.PayQueue;
 
 namespace User2User
 {
     class Program
     {
-        public static void Main()
+        public async static Task Main()
         {
-            /*
-            var configuration = new ConfigurationBuilder()
-                .AddEnvironmentVariables()
-                .Build();
-            Console.WriteLine("Start");
-            var serv = new User2UserService(configuration);
-            await serv.Execute();
-            Console.WriteLine("End");
-            */
-            Go();
-        }
-
-
-
-        public static void Go()
-        {
-            var msg = new Msg3 { Id = Guid.NewGuid() };
-            var name = msg.GetType().FullName;
-            var serialized = JsonSerializer.Serialize(msg);
-            var t = Type.GetType(name);
-            dynamic deser = JsonSerializer.Deserialize(serialized, t);
-            var cons = new Consumer();
-            cons.Consume(deser);
-
-
-
-            dynamic msg4 = new Msg4 { Id = Guid.NewGuid() };
-
-            var genericBase = typeof(IDoer<>);
-            var hah = (IDoer<>) cons;
-            /*
-            var combinedType = genericBase.MakeGenericType(msg4.GetType());
-             Console.WriteLine($"Combined {combinedType}");
-
-
-
-
-
-            dynamic blah = Convert.ChangeType(cons, combinedType);
-            var l = blah.GetType() == combinedType;
-
-            Console.WriteLine(cons.ToString());
-            foreach (Type imp in cons.GetType().GetInterfaces())
+            var user = "pi";
+            var pwd = "raspberry";
+            var vhost = "/";
+            var hostname = "192.168.88.19";
+            var consumer = new RabbitMqConsumer(user, pwd, vhost, hostname);
+            consumer.RegisterCommandConsumer("wpay_command_consumer", new ConsumeExecuter("command"));
+            var exchanges = new string[] 
             {
-                Console.WriteLine(imp);
-            }
+                "wpay_exchange_1",
+                "wpay_exchange_2"
+            };
+            consumer.RegisterEventConsumer("wpay_command_consumer", exchanges, new ConsumeExecuter("event"));
+            /*
+            await consumer
+                .GetExchangePublisher()
+                .Command("wpay_command_consumer", Encoding.UTF8.GetBytes("test"));
+            
+            await consumer
+                .GetExchangePublisher()
+                .Command("wpay_command_consumer", Encoding.UTF8.GetBytes("message 2"));
             */
-        //    Console.WriteLine($"DOOO {l}");
 
-
+            await Task.Delay(300000);
         }
 
     }
 
-
-
-
-
-
-    public class Msg1
+    public class  ConsumeExecuter: IConsumeExecuter
     {
-        public int Id { get; set; }
-    }
-    public class Msg2
-    {
-        public string Value { get; set; }
-    }
-    public class Msg3
-    {
-        public Guid Id { get; set; }
-    }
-    public class Msg4
-    {
-        public Guid Id { get; set; }
-    }
-
-
-    public interface IConsumer<T>
-    {
-        void Consume(T t);
-    }
-
-    public interface IDoer<T>
-    {
-        void Do(T t);
-    }
-
-
-    public class Consumer :
-        IConsumer<Msg1>,
-        IConsumer<Msg2>,
-        IConsumer<Msg3>,
-        IDoer<Msg4>
-
-    {
-        public void Consume(Msg1 msg)
+        private string _prefix;
+        public ConsumeExecuter(string pref)
         {
-            Console.WriteLine("MSG1");
+            _prefix = pref;
         }
-        public void Consume(Msg2 msg)
+        public async Task Execute(IExchangePublisher exchangePublisher, byte[] data)
         {
-            Console.WriteLine(msg.Value);
-        }
-        public void Consume(Msg3 msg)
-        {
-            Console.WriteLine("MSG3");
-        }
-
-        public void Do(Msg4 msg)
-        {
-            Console.WriteLine("MSG4");
+            var strData = System.Text.Encoding.UTF8.GetString(data, 0, data.Length);
+            Console.WriteLine($"Consumer '{_prefix}' Message received: {strData}");
+            Task.Yield();
         }
     }
 

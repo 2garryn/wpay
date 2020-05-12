@@ -8,14 +8,13 @@ using wpay.Library.Services.Core.Commands;
 using wpay.Library.Services.Core;
 using wpay.Library.Libs.Db;
 using wpay.Library.Services.Core.Models;
-using wpay.Library.Services.Core.Messages;
 using wpay.Library.Services.Core.Outbox;
 using wpay.Library.Exceptions;
 using MassTransit;
 
 namespace wpay.Library.Services.Core
 {
-
+    /*
     public class CoreService
     {
         private readonly DbClient _db;
@@ -140,6 +139,6 @@ namespace wpay.Library.Services.Core
 
 
     }
-
+*/
 
 }

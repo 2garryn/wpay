@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using wpay.Library.Services.Core.Models;
-using wpay.Library.Services.Core.Messages;
 
-namespace wpay.Library.Services.Core.Outbox
+namespace wpay.Library.Services.Core.Definition
 {
     public interface ICoreEvent{}
 

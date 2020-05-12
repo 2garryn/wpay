@@ -18,7 +18,7 @@ namespace wpay.Library.Services.Core.Service
             _repo = repo;
         }
 
-        public async Task<Account> CreateAsync(CreateAccount create, CreateAccountOptions options)
+        public async Task<Account> CreateAsync(CreateAccount create, Action<CreateAccountOptions>? setOpts = null)
         {
             var balance = AccountBalance.Zero(create.Currency);
             var acc = new Account(create.Id, balance, true);
@@ -29,6 +29,8 @@ namespace wpay.Library.Services.Core.Service
             }
             catch (AccountUniqException)
             {
+                var options = new CreateAccountOptions();
+                setOpts?.Invoke(options);
                 if (!options.IngoreOnDuplicate)
                 {
                     var info = new Dictionary<string, string>()

@@ -4,7 +4,7 @@ using System.Linq;
 using wpay.Library.Services.Core.Models;
 using wpay.Library.Models;
 
-namespace wpay.Library.Services.Core.Messages
+namespace wpay.Library.Services.Core.Definition
 {
 
     public class TransactionEvent

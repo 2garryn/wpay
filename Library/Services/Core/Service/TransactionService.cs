@@ -12,7 +12,7 @@ namespace wpay.Library.Services.Core.Service
 
     public partial class Service
     {
-        public async Task<Transaction> CreateAsync(CreateTransaction create, CreateTransactionOptions options)
+        public async Task<Transaction> CreateAsync(CreateTransaction create, Action<CreateTransactionOptions>? setOpts = null)
         {
             var account = await _repo.GetAsync(create.AccountId, true);
             var tran = new Calculator().CreateToTransaction(create);
@@ -36,6 +36,8 @@ namespace wpay.Library.Services.Core.Service
             }
             catch (TransactionUniqException)
             {
+                var options = new CreateTransactionOptions();
+                setOpts?.Invoke(options);
                 if (options.FailOnExist)
                 {
                     var info = new Dictionary<string, string>()
@@ -48,11 +50,13 @@ namespace wpay.Library.Services.Core.Service
             }
 
         }
-        public async Task<Transaction> UpdateAsync(UpdateTransaction update, UpdateTransactionOptions options)
+        public async Task<Transaction> UpdateAsync(UpdateTransaction update, Action<UpdateTransactionOptions>? setOpts = null)
         {
             var tran = await _repo.GetAsync(update.Id, true);
             if (tran.Amount is AmountIncomeCompleted || tran.Amount is AmountOutcomeCompleted)
             {
+                var options = new UpdateTransactionOptions();
+                setOpts?.Invoke(options);
                 if (options.FailOnUpdateDone)
                 {
                     throw new WPayException(TransactionErrors.AlreadyCompleted);
