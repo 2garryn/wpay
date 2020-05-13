@@ -55,8 +55,13 @@ namespace wpay.Library.Frameworks.PayQueue
         Task InvokeConsumeEvent<T>(T ev, Context context, NextDelegate<T> next);
     }
 
+    public interface IErrorResponser
+    {
+        Task Error<T>(T error);
+        Task Ok();
+    }
     public interface IErrorHandling
     {
-        Task Invoke(Func<Task> next, Func<Task> okClb, Func<object, Task> errorClb);
+        Task Invoke(Func<Task> next, IErrorResponser errorResponser);
     }
 }

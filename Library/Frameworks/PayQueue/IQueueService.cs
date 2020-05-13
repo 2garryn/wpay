@@ -6,8 +6,8 @@ namespace wpay.Library.Frameworks.PayQueue
 {
     public interface IQueueConsumer
     {
-        void RegisterCommandConsumer(string queue, IConsumeExecuter executer);
-        void RegisterEventConsumer(string queue, string[] dispatch, IConsumeExecuter executer); 
+        void RegisterCommandConsumer(string queue, IConsumeExecutor executor);
+        void RegisterEventConsumer(string queue, string[] dispatch, IConsumeExecutor executor); 
         IExchangePublisher GetExchangePublisher();
     }
 
@@ -17,7 +17,7 @@ namespace wpay.Library.Frameworks.PayQueue
         Task Command(string endpoint, byte[] data);
     }
 
-    public interface IConsumeExecuter
+    public interface IConsumeExecutor
     {
         Task Execute(IExchangePublisher exchangePublisher, byte[] data);
     }

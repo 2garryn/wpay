@@ -6,19 +6,21 @@ using System.Text.Json;
 using System.Text;
 
 
-namespace wpay.Library.Frameworks.PayQueue
+namespace wpay.Library.Frameworks.PayQueue.Publish
 {
-    using GetRoutePublishFunc = Func<Type, object, string>;
-    using GetRouteCommandFunc = Func<Type, Type, string>;
-
     public class Publisher
     {
-        private readonly GetRoutePublishFunc _publishRoute;
-        private readonly GetRouteCommandFunc _commandRoute;
+        private readonly PublishEventCatalog _eventCatalog;
+        private readonly PublishCommandCatalog _commandCatalog;
         private readonly IExchangePublisher _publisher;
 
-        public Publisher(GetRoutePublishFunc publishRoute, GetRouteCommandFunc commandRoute, IExchangePublisher publisher) =>
-            (_publishRoute, _commandRoute, _publisher) = (publishRoute, commandRoute, publisher);
+        public Publisher(IExchangePublisher publisher, PublishCommandCatalog commandCatalog,
+            PublishEventCatalog eventCatalog)
+        {
+            _publisher = publisher;
+            _eventCatalog = eventCatalog;
+            _commandCatalog = commandCatalog;
+        }
 
         public async Task Command<S, T>(T message) where S : IServiceDefinition, new() =>
             await Command<S, T>(message, (ICallParameters parameters) => 
@@ -29,7 +31,7 @@ namespace wpay.Library.Frameworks.PayQueue
 
         public async Task Command<S, T>(T message, Action<ICallParameters> parameters) where S : IServiceDefinition, new()
         {
-            var route = _commandRoute(typeof(S), typeof(T));
+            var route = _commandCatalog.GetRoute<S, T>();
             var binMessage = DoEncode<T>(message, parameters);
             await _publisher.Command(route, binMessage);
         }
@@ -43,7 +45,7 @@ namespace wpay.Library.Frameworks.PayQueue
 
         public async Task Publish<T>(T message, Action<ICallParameters> parameters)
         {
-            var route = _publishRoute(typeof(T), message);
+            var route = _eventCatalog.GetRoute(message);
             var binMessage = DoEncode<T>(message, parameters);
             await _publisher.PublishEvent(route, binMessage);
         }

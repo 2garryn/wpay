@@ -33,7 +33,7 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
             _poolTask = Task.Run(async () => await new ChannelPool(_conn, PUBLISHER_POOL_SIZE, _poolChannel.Reader).Run());
 
         }
-        public void RegisterCommandConsumer(string queue, IConsumeExecuter executer)
+        public void RegisterCommandConsumer(string queue, IConsumeExecutor executor)
         {
             var channel = _conn.CreateModel();
             channel.ExchangeDeclare(queue, ExchangeType.Direct, true, false);
@@ -42,12 +42,12 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.Received += async (model, ea) =>
             {
-                await executer.Execute(GetExchangePublisher(), ea.Body.ToArray());
+                await executor.Execute(GetExchangePublisher(), ea.Body.ToArray());
                 channel.BasicAck(ea.DeliveryTag, false);
             };
             channel.BasicConsume(queue, false, consumer);
         }
-        public void RegisterEventConsumer(string queue, string[] exchanges, IConsumeExecuter executer)
+        public void RegisterEventConsumer(string queue, string[] exchanges, IConsumeExecutor executor)
         {
             var channel = _conn.CreateModel();
             channel.QueueDeclare(queue, true, false, false, null);
@@ -59,7 +59,7 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.Received += async (model, ea) =>
             {
-                await executer.Execute(GetExchangePublisher(), ea.Body.ToArray());
+                await executor.Execute(GetExchangePublisher(), ea.Body.ToArray());
                 channel.BasicAck(ea.DeliveryTag, false);
             };
             channel.BasicConsume(queue, false, consumer);
