@@ -16,7 +16,7 @@ namespace wpay.Library.Frameworks.PayQueue
         
         public (Context, Type, byte[]) New(IExchangePublisher exchangePublisher, byte[] data)
         {
-            var datagram = JsonSerializer.Deserialize<Datagram>(data);
+            var datagram = ParseDatagram(data);
             var t = Type.GetType(datagram.Type);
             var context = new Context(
                 datagram.Id,
@@ -24,6 +24,19 @@ namespace wpay.Library.Frameworks.PayQueue
                 _publisherFactory.New(exchangePublisher)
             );
             return (context, t, datagram.Message);
+        }
+
+        private Datagram ParseDatagram(byte[] data)
+        {
+            try
+            {
+                return JsonSerializer.Deserialize<Datagram>(data);
+            }
+            catch (JsonException e)
+            {
+                var asStirng = System.Text.Encoding.UTF8.GetString(data);
+                throw new PayQueueException($"Can not deserialize Datagram. Data: {asStirng}", e);
+            }
         }
     }
 }

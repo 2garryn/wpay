@@ -43,8 +43,10 @@ namespace wpay.Library.Frameworks.PayQueue
             def.Configure(new ExecuteConfigurator(null!, publFactoryBuilder));
             _publisherFactory = publFactoryBuilder.Build();
             var contextFactory = new ContextFactory(_publisherFactory);
-            var consumeCatalog = new ConsumeCatalogBuilder(routes, contextFactory, (context) => _impl(context), _consumer);
+            var consumeCatalog = new ConsumeCatalogBuilder(routes, contextFactory, (context) => _impl(context), _consumer, _conf);
+            def.Configure(new ExecuteConfigurator(consumeCatalog, null!));
             consumeCatalog.Register();
+            
         }
 
         public TImpl GetService(Action<ICallParameters>? p = null)

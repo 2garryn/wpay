@@ -15,4 +15,12 @@ namespace wpay.Library.Frameworks.PayQueue
             (Id, ConversationId, Publisher) = (id, converstaionId, publisher);
     }
 
+
+    public class MessageMetadata
+    {
+        public string SourceServiceLabel { get; }
+        public string SourceServiceType { get; }
+        public DateTime IssuedTimestamp { get;  }
+        
+    }
 }

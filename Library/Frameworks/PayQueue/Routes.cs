@@ -14,7 +14,7 @@ namespace wpay.Library.Frameworks.PayQueue
             _prefix + ":" + _consumerLabel + ":commands";
         
         public string PublishCommandExchange(string label) => 
-            _prefix + ":" + label + "commands";
+            _prefix + ":" + label + ":commands";
         public string ConsumeEventQueue() => 
             _prefix + ":" + _consumerLabel + ":events";
         public string ConsumeEventExchange(string label, Type t, string routeKey = null) =>

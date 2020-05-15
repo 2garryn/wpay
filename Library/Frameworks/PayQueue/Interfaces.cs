@@ -60,8 +60,12 @@ namespace wpay.Library.Frameworks.PayQueue
         Task Error<T>(T error);
         Task Ok();
     }
-    public interface IErrorHandling
+    public interface IErrorCommandHandling
     {
-        Task Invoke(Func<Task> next, IErrorResponser errorResponser);
+        Task Invoke<TCommand>(Context context, TCommand command, Func<Task> next);
+    }
+    public interface IErrorEventHandling
+    {
+        Task Invoke<TEvent>(Context context, TEvent ev, Func<Task> next);
     }
 }

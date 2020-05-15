@@ -6,9 +6,9 @@ using wpay.Library.Services.Core.Outbox;
 using MassTransit;
 using System.Text.Json;
 using wpay.Library.Services.Core.Commands;
-using wpay.Library.Services.Core.Messages;
 using wpay.Library.Services.Core.Models;
 using wpay.Library.Models;
+using wpay.Library.Services.Core.Definition;
 
 namespace wpay.Library.Services.User2User
 {

@@ -6,7 +6,6 @@ using Microsoft.Extensions.Configuration;
 using MassTransit;
 
 using wpay.Library.Services.Core.Commands;
-using wpay.Library.Services.Core.Messages;
 using wpay.Library.Services.Core.Models;
 using wpay.Library.Models;
 
@@ -79,7 +78,7 @@ namespace wpay.Library.Services.User2User
             );
             var convId = Guid.NewGuid();
             Console.WriteLine($"Publish create account with {accId.Value.Value} with convId = {convId} ");
-            await bus.Publish(CreateAccountCommand.From(create), context => context.ConversationId = convId);
+            //await bus.Publish(CreateAccountCommand.From(create), context => context.ConversationId = convId);
 
 
 

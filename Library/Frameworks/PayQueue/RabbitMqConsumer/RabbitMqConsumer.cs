@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -42,7 +43,12 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.Received += async (model, ea) =>
             {
-                await executor.Execute(GetExchangePublisher(), ea.Body.ToArray());
+                var metadata = new Dictionary<string, string>()
+                {
+                    ["queue"] = queue,
+                    ["exchange"] = ea.Exchange
+                };
+                await executor.Execute(GetExchangePublisher(), metadata, ea.Body.ToArray());
                 channel.BasicAck(ea.DeliveryTag, false);
             };
             channel.BasicConsume(queue, false, consumer);
@@ -59,7 +65,12 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.Received += async (model, ea) =>
             {
-                await executor.Execute(GetExchangePublisher(), ea.Body.ToArray());
+                var metadata = new Dictionary<string, string>()
+                {
+                    ["queue"] = queue,
+                    ["exchange"] = ea.Exchange
+                };
+                await executor.Execute(GetExchangePublisher(), metadata,ea.Body.ToArray());
                 channel.BasicAck(ea.DeliveryTag, false);
             };
             channel.BasicConsume(queue, false, consumer);

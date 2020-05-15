@@ -14,8 +14,8 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
             _exchanges = new HashSet<string>();
         }
         
-        public void Add(Type t, IServiceDefinition servDef, string routeKey = null) =>
-            _exchanges.Add(_routes.ConsumeEventExchange(servDef.Label(), t, routeKey));
+        public void Add<S, T>( string routeKey = null) where S : IServiceDefinition, new() =>
+            _exchanges.Add(_routes.ConsumeEventExchange(new S().Label(), typeof(T), routeKey));
         public string Queue
         {
             get { return _routes.ConsumeEventQueue(); }

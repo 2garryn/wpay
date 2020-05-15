@@ -17,15 +17,17 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
             _contextFactory = contextFactory;
         }
 
-        public void Add(Type t, IServiceDefinition servDef, ICallbackExecutor executor)
+        public void Consume<S, T>(ICallbackExecutor executor) 
+            where S : IServiceDefinition, new()
         {
-            _catalog[t] = executor;
-            _consumeRoutes.Add(t, servDef);
+            _catalog[typeof(T)] = executor;
+            _consumeRoutes.Add<S, T>();
         }
-        public void Add(Type t, IServiceDefinition servDef, string routeKey, ICallbackExecutor executor)
+        public void Consume<S, T>(string routeKey, ICallbackExecutor executor) 
+            where S : IServiceDefinition, new()
         {
-            _catalog[t] = executor;
-            _consumeRoutes.Add(t, servDef, routeKey);
+            _catalog[typeof(T)] = executor;
+            _consumeRoutes.Add<S, T>(routeKey);
         }
 
         public IConsumeExecutor GetExecuter() =>

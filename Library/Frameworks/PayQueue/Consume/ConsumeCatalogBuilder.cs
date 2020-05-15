@@ -10,24 +10,24 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
         private readonly IQueueConsumer _consumer;
 
 
-        public ConsumeCatalogBuilder(Routes routes, ContextFactory contextFactory, Func<Context, object> servCreator, IQueueConsumer qConsumer)
+        public ConsumeCatalogBuilder(Routes routes, ContextFactory contextFactory, Func<Context, object> servCreator, IQueueConsumer qConsumer, ServiceWrapperConf conf)
         {
             _commandCatalog = new ConsumeCommandCatalogBuilder(routes, contextFactory);
             _eventCatalog = new ConsumeEventCatalogBuilder(routes, contextFactory);
-            _execFactory = new CallbackExecutorFactory(servCreator);
+            _execFactory = new CallbackExecutorFactory(servCreator, conf);
             _consumer = qConsumer;
 
         }
 
 
         public void ConsumeCommand<T>() =>
-            _commandCatalog.Add(typeof(T), _execFactory.NewCommand<T>());
+            _commandCatalog.Consume<T>(_execFactory.NewCommand<T>());
 
         public void ConsumeEvent<S, T>() where S : IServiceDefinition, new()  =>
-            _eventCatalog.Add(typeof(T), new S(), _execFactory.NewEvent<S, T>());
+            _eventCatalog.Consume<S, T>(_execFactory.NewEvent<S, T>());
         
         public void ConsumeEvent<S, T>(string key) where S : IServiceDefinition, new()  =>
-            _eventCatalog.Add(typeof(T), new S(), key, _execFactory.NewEvent<S, T>());
+            _eventCatalog.Consume<S, T>(key, _execFactory.NewEvent<S, T>());
 
         public void Register()
         {

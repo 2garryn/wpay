@@ -51,6 +51,7 @@ namespace wpay.Library.Services.Core
         {
             await _db.ExecuteTransaction(async (conn, tx) =>
             {
+                /*
                 var db = new Db(conn, tx);
                 await db.SetSavePointAsync();
                 var core = new Service.Service(db);
@@ -67,6 +68,7 @@ namespace wpay.Library.Services.Core
                     await repl.PutAsync(new ErrorRaised { Error = excp.Message, Info = excp.Info }, convId);
                     tx.Commit();
                 }
+                */
             });
         }
 

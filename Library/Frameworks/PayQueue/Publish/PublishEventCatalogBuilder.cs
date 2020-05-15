@@ -12,8 +12,9 @@ namespace wpay.Library.Frameworks.PayQueue.Publish
         public PublishEventCatalogBuilder(Routes routes)
         {
             _routes = routes;
+            _catalog = new Dictionary<Type, Func<object, string>>();
         }
-        public void PublishEvent<T>() => _catalog[typeof(T)] = _routes.PublishEventExchange<T>(null);
+        public void PublishEvent<T>() => _catalog[typeof(T)] = _routes.PublishEventExchange<T>();
         public void PublishEvent<T>(Func<T, string> route) => _catalog[typeof(T)] = _routes.PublishEventExchange<T>(route);
         
         public PublishEventCatalog Build() => 
