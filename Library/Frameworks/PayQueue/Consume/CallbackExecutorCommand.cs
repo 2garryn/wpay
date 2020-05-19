@@ -1,6 +1,7 @@
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using wpay.Library.Frameworks.PayQueue;
 
 namespace wpay.Library.Frameworks.PayQueue.Consume
@@ -8,22 +9,23 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
     public class CallbackExecutorCommand<T>: ICallbackExecutor
     {
         private Func<Context, object> _servCreator;
-        private ServiceWrapperConf _conf;
-        //private readonly InternalMiddleware _middleware;
-        public CallbackExecutorCommand(Func<Context, object> servCreator, ServiceWrapperConf conf)
+        private DepsCatalog _deps;
+        internal CallbackExecutorCommand(Func<Context, object> servCreator, DepsCatalog deps)
         {
             _servCreator = servCreator;
-            _conf = conf;
+            _deps = deps;
         }
 
         public async Task Execute(byte[] command, Context context)
         {
+            _deps.Logger.LogDebug($"Consume command {typeof(T).FullName}. ID {context.Id}");
             var castedCommand = Deserialize<T>(command);
             var serv = (ICommandConsumer<T>) _servCreator(context);
-            await _conf.ErrorCommandHandling().Invoke(context, castedCommand,async () =>
+            await _deps.ErrorCommandHandling().Invoke(context, castedCommand,async () =>
             {
                 await serv.ConsumeCommand(castedCommand);
             });
+            _deps.Logger.LogDebug($"Consumed command {typeof(T).FullName} successfully. ID {context.Id}");
         }
         private T Deserialize<T>(byte[] data)
         {

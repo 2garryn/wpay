@@ -8,7 +8,7 @@ using wpay.Library.Frameworks.PayQueue.Publish;
 namespace wpay.Library.Frameworks.PayQueue
 {
 
-    public class ExecuteConfigurator : IConfigurator
+    internal class ExecuteConfigurator : IConfigurator
     {
         //private readonly CallbackExecutorFactory _execFactory;
         private readonly ConsumeCatalogBuilder _consumeCatalog;

@@ -6,19 +6,20 @@ using System.Collections.Immutable;
 namespace wpay.Library.Frameworks.PayQueue.Publish
 {
     using MessageType = Type;
-    public class PublisherFactory
+    internal class PublisherFactory
     {
         private PublishCommandCatalog _commandCatalog;
         private PublishEventCatalog _eventCatalog;
-
-        public PublisherFactory(PublishCommandCatalog commandCatalog, PublishEventCatalog eventCatalog)
+        private DepsCatalog _deps;
+        public PublisherFactory(PublishCommandCatalog commandCatalog, PublishEventCatalog eventCatalog, DepsCatalog deps)
         {
             _commandCatalog = commandCatalog;
             _eventCatalog = eventCatalog;
+            _deps = deps;
         }
 
         public Publisher New(IExchangePublisher publisher) => 
-            new Publisher(publisher, _commandCatalog, _eventCatalog);
+            new Publisher(publisher, _commandCatalog, _eventCatalog, _deps);
         
     }
 }

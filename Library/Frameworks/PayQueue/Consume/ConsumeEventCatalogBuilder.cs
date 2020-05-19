@@ -5,7 +5,7 @@ using System.Collections.Immutable;
 
 namespace wpay.Library.Frameworks.PayQueue.Consume
 {
-    public class ConsumeEventCatalogBuilder
+    internal class ConsumeEventCatalogBuilder
     {
         private Dictionary<Type, ICallbackExecutor> _catalog;
         private readonly ConsumeEventRoute _consumeRoutes;

@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 
 namespace wpay.Library.Frameworks.PayQueue.Consume
 {
-    public class ConsumeCommandCatalogBuilder
+    internal class ConsumeCommandCatalogBuilder
     {
         private Dictionary<Type, ICallbackExecutor> _catalog;
         private readonly ContextFactory _contextFactory;

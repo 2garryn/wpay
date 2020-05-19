@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 
 namespace wpay.Library.Frameworks.PayQueue.Publish
@@ -13,13 +14,15 @@ namespace wpay.Library.Frameworks.PayQueue.Publish
         private readonly PublishEventCatalog _eventCatalog;
         private readonly PublishCommandCatalog _commandCatalog;
         private readonly IExchangePublisher _publisher;
+        private readonly DepsCatalog _deps;
 
-        public Publisher(IExchangePublisher publisher, PublishCommandCatalog commandCatalog,
-            PublishEventCatalog eventCatalog)
+        internal Publisher(IExchangePublisher publisher, PublishCommandCatalog commandCatalog,
+            PublishEventCatalog eventCatalog, DepsCatalog deps)
         {
             _publisher = publisher;
             _eventCatalog = eventCatalog;
             _commandCatalog = commandCatalog;
+            _deps = deps;
         }
 
         public async Task Command<S, T>(T message) where S : IServiceDefinition, new() =>
@@ -32,8 +35,10 @@ namespace wpay.Library.Frameworks.PayQueue.Publish
         public async Task Command<S, T>(T message, Action<ICallParameters> parameters) where S : IServiceDefinition, new()
         {
             var route = _commandCatalog.GetRoute<S, T>();
-            var binMessage = DoEncode<T>(message, parameters);
+            var (binMessage, id) = DoEncode<T>(message, parameters);
+            _deps.Logger.LogDebug($"Publish command {typeof(S).Name}:{typeof(T).Name} to {route}. ID {id}");
             await _publisher.Command(route, binMessage);
+            _deps.Logger.LogDebug($"Published command {typeof(S).Name}:{typeof(T).Name} to {route} successfully. ID {id}");
         }
 
         public async Task Publish<T>(T message) =>
@@ -46,11 +51,13 @@ namespace wpay.Library.Frameworks.PayQueue.Publish
         public async Task Publish<T>(T message, Action<ICallParameters> parameters)
         {
             var route = _eventCatalog.GetRoute(message);
-            var binMessage = DoEncode<T>(message, parameters);
+            var (binMessage, id) = DoEncode<T>(message, parameters);
+            _deps.Logger.LogDebug($"Publish event {typeof(T).Name} to {route}. ID: {id}");
             await _publisher.PublishEvent(route, binMessage);
+            _deps.Logger.LogDebug($"Published event {typeof(T).Name} to {route} successfully. ID: {id}");
         }
 
-        private byte[] DoEncode<T>(T message, Action<ICallParameters> parameters)
+        private (byte[], Guid) DoEncode<T>(T message, Action<ICallParameters> parameters)
         {
             var callParams = new CallParameters();
             parameters(callParams);
@@ -65,7 +72,7 @@ namespace wpay.Library.Frameworks.PayQueue.Publish
                 Type = typeof(T).FullName,
                 Message = Encoding.UTF8.GetBytes(serMessage)
             };
-            return Encoding.UTF8.GetBytes(JsonSerializer.Serialize(datagram));
+            return (Encoding.UTF8.GetBytes(JsonSerializer.Serialize(datagram)), datagram.Id);
         }
 
         

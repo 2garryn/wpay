@@ -24,26 +24,29 @@ namespace wpay.Library.Frameworks.PayQueue
         private readonly IQueueConsumer _consumer;
         private readonly ImplFactory<TImpl, TServDef> _impl;
         private PublisherFactory _publisherFactory;
-        private readonly ServiceWrapperConf _conf;
+
+        private readonly  DepsCatalog _deps;
+        //private readonly ServiceWrapperConf _conf;
 
 
         public ServiceWrapper(IQueueConsumer consumer, ImplFactory<TImpl, TServDef> impl, Action<ServiceWrapperConf>? confAct = null) 
         {
             _consumer = consumer;
             _impl = impl;
-            _conf = new ServiceWrapperConf();
-            confAct?.Invoke(_conf);
+            var conf = new ServiceWrapperConf();
+            confAct?.Invoke(conf);
+            _deps = new DepsCatalog(conf, new TServDef(), typeof(TImpl));
         }
 
         public void Execute()
         {
             var def = new TServDef();
-            var routes = new Routes(_conf.Prefix, new TServDef().Label());
-            var publFactoryBuilder = new PublisherFactoryBuilder(routes);
+            var routes = new Routes(_deps.Prefix, new TServDef().Label());
+            var publFactoryBuilder = new PublisherFactoryBuilder(routes, _deps);
             def.Configure(new ExecuteConfigurator(null!, publFactoryBuilder));
             _publisherFactory = publFactoryBuilder.Build();
             var contextFactory = new ContextFactory(_publisherFactory);
-            var consumeCatalog = new ConsumeCatalogBuilder(routes, contextFactory, (context) => _impl(context), _consumer, _conf);
+            var consumeCatalog = new ConsumeCatalogBuilder(routes, contextFactory, (context) => _impl(context), _consumer, _deps);
             def.Configure(new ExecuteConfigurator(consumeCatalog, null!));
             consumeCatalog.Register();
             

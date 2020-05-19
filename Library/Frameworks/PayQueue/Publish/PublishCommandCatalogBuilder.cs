@@ -2,20 +2,23 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace wpay.Library.Frameworks.PayQueue.Publish
 {
     using MessageType = Type;
     using ServerType = Type;
-    public class PublishCommandCatalogBuilder
+    internal class PublishCommandCatalogBuilder
     {
         private Dictionary<MessageType, Dictionary<MessageType, string>> _catalog;
         private Routes _routes;
+        private DepsCatalog _deps;
 
-        public PublishCommandCatalogBuilder(Routes routes)
+        public PublishCommandCatalogBuilder(Routes routes, DepsCatalog deps)
         {
             _catalog = new Dictionary<Type, Dictionary<Type, string>>();
             _routes = routes;
+            _deps = deps;
         }
         
         
@@ -34,6 +37,8 @@ namespace wpay.Library.Frameworks.PayQueue.Publish
                 messages = new Dictionary<MessageType, string>() { [msgType] = path };
                 _catalog.Add(servtype, messages);
             }
+            _deps.Logger.LogDebug($"Define publish command {typeof(S).FullName}:{typeof(T).FullName}, route \"{path}\"");
+
         }
 
         public PublishCommandCatalog Build()

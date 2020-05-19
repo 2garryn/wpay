@@ -42,7 +42,6 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
                         model.ExchangeDeclare(tsk.ExchangeName, tsk.ExchangeType, true, false);
                         exchanges.Add(tsk.ExchangeName);
                     }
-                    Console.WriteLine($"Publish message Ehcnaghe: {tsk.ExchangeName} rk: {tsk.RoutingKey}");
                     var props = model.CreateBasicProperties();
                     tsk.Properties(props);
                     model.BasicPublish(tsk.ExchangeName, tsk.RoutingKey, true, props, tsk.Body);

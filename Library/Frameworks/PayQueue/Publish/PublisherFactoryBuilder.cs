@@ -1,15 +1,19 @@
 using System;
+using Microsoft.Extensions.Logging;
+using wpay.Library.Frameworks.PayQueue;
 
 namespace wpay.Library.Frameworks.PayQueue.Publish
 {
-    public class PublisherFactoryBuilder
+    internal class PublisherFactoryBuilder
     {
         private PublishCommandCatalogBuilder _commandCatalog;
         private PublishEventCatalogBuilder _eventCatalog;
-        public PublisherFactoryBuilder(Routes routes)
+        private DepsCatalog _deps;
+        public PublisherFactoryBuilder(Routes routes, DepsCatalog depsCatalog)
         {
-            _eventCatalog = new PublishEventCatalogBuilder(routes);
-            _commandCatalog = new PublishCommandCatalogBuilder(routes);
+            _eventCatalog = new PublishEventCatalogBuilder(routes, depsCatalog);
+            _commandCatalog = new PublishCommandCatalogBuilder(routes, depsCatalog);
+            _deps = depsCatalog;
         }
 
         public void Command<S, T>() where S : IServiceDefinition, new() => _commandCatalog.Command<S, T>();
@@ -18,7 +22,7 @@ namespace wpay.Library.Frameworks.PayQueue.Publish
 
         public PublisherFactory Build()
         {
-            return new PublisherFactory(_commandCatalog.Build(), _eventCatalog.Build());
+            return new PublisherFactory(_commandCatalog.Build(), _eventCatalog.Build(), _deps);
         }
     }
 }

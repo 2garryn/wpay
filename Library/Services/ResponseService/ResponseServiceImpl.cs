@@ -17,10 +17,7 @@ namespace ResponseService
 
         public async Task ConsumeCommand(CreateCommand createCommand)
         {
-            if (createCommand.Amount < 10)
-            {
-                throw new Exception("Haha less than 10");
-            }
+
             await _context.Publisher.Publish(new CreatedEvent()
             {
                 Name = createCommand.Name,

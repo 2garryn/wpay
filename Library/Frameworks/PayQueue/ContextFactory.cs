@@ -5,7 +5,7 @@ using wpay.Library.Frameworks.PayQueue.Publish;
 namespace wpay.Library.Frameworks.PayQueue
 {
 
-    public class ContextFactory
+    internal class ContextFactory
     {
         private PublisherFactory _publisherFactory;
 

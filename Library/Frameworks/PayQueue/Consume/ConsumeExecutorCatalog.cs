@@ -8,7 +8,7 @@ using System.Text.Json;
 
 namespace wpay.Library.Frameworks.PayQueue.Consume
 {
-    public class ConsumeExecutorCatalog : IConsumeExecutor
+    internal class ConsumeExecutorCatalog : IConsumeExecutor
     {
         private readonly ImmutableDictionary<Type, ICallbackExecutor> _consumers;
         private readonly ContextFactory _contextFactory;
