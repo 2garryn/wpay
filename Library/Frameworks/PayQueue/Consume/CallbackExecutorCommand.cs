@@ -21,7 +21,7 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
             _deps.Logger.LogDebug($"Consume command {typeof(T).FullName}. ID {context.Id}");
             var castedCommand = Deserialize<T>(command);
             var serv = (ICommandConsumer<T>) _servCreator(context);
-            await _deps.ErrorCommandHandling().Invoke(context, castedCommand,async () =>
+            await _deps.ErrorCommandHandling().Invoke(context, castedCommand, async () =>
             {
                 await serv.ConsumeCommand(castedCommand);
             });

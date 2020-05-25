@@ -43,10 +43,10 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.Received += async (model, ea) =>
             {
-                var metadata = new Dictionary<string, string>()
+                var metadata = new ConsumeMessageMetadata()
                 {
-                    ["queue"] = queue,
-                    ["exchange"] = ea.Exchange
+                    Queue = queue,
+                    Exchange = ea.Exchange
                 };
                 await executor.Execute(GetExchangePublisher(), metadata, ea.Body.ToArray());
                 channel.BasicAck(ea.DeliveryTag, false);
@@ -65,10 +65,11 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.Received += async (model, ea) =>
             {
-                var metadata = new Dictionary<string, string>()
+                var metadata = new ConsumeMessageMetadata()
                 {
-                    ["queue"] = queue,
-                    ["exchange"] = ea.Exchange
+                    Queue = queue,
+                    Exchange = ea.Exchange
+                
                 };
                 await executor.Execute(GetExchangePublisher(), metadata,ea.Body.ToArray());
                 channel.BasicAck(ea.DeliveryTag, false);

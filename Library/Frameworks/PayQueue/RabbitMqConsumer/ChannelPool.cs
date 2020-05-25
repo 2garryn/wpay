@@ -44,6 +44,7 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
                     }
                     var props = model.CreateBasicProperties();
                     tsk.Properties(props);
+                    
                     model.BasicPublish(tsk.ExchangeName, tsk.RoutingKey, true, props, tsk.Body);
                     await Task.Yield();
                 }

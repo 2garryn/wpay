@@ -30,16 +30,12 @@ namespace wpay.Library.Frameworks.PayQueue
 
     public interface ICommandConsumer<T>
     {
-        Task ConsumeCommand(T message);
+        Task ConsumeCommand(MessageContext<T> message);
     }
 
     public interface IEventConsumer<S, T>
     {
-        Task ConsumeEvent(T message);
-    }
-    public interface IErrorConsumer<S, TError>
-    {
-        Task ConsumeError(TError message);
+        Task ConsumeEvent(MessageContext<T>  message);
     }
 
     public interface ICallParameters
@@ -49,17 +45,7 @@ namespace wpay.Library.Frameworks.PayQueue
 
     public delegate Task NextDelegate<T>(T message, Context context);
 
-    public interface IMiddleware
-    {
-        Task InvokeConsumeCommand<T>(T command, Context context, NextDelegate<T> next);
-        Task InvokeConsumeEvent<T>(T ev, Context context, NextDelegate<T> next);
-    }
 
-    public interface IErrorResponser
-    {
-        Task Error<T>(T error);
-        Task Ok();
-    }
     public interface IErrorCommandHandling
     {
         Task Invoke<TCommand>(Context context, TCommand command, Func<Task> next);
@@ -68,4 +54,10 @@ namespace wpay.Library.Frameworks.PayQueue
     {
         Task Invoke<TEvent>(Context context, TEvent ev, Func<Task> next);
     }
+
+    public interface IInternalErrorHandler
+    {
+        
+    }
+
 }

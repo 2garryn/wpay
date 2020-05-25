@@ -17,10 +17,10 @@ namespace wpay.Library.Frameworks.PayQueue
             _prefix + ":" + label + ":commands";
         public string ConsumeEventQueue() => 
             _prefix + ":" + _consumerLabel + ":events";
-        public string ConsumeEventExchange(string label, Type t, string routeKey = null) =>
+        public string ConsumeEventExchange(string label, Type t, string routeKey = null!) =>
             _prefix + ":" + label + ":events" + ":" + t.Name + (routeKey == null ? "" : ":" + routeKey);
 
-        public Func<object, string>  PublishEventExchange<T>(Func<T, string> route = null)
+        public Func<object, string>  PublishEventExchange<T>(Func<T, string> route = null!)
         {
             var tName = typeof(T).Name;
             if (route == null)

@@ -9,16 +9,14 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
         private ConsumeCommandCatalogBuilder _commandCatalog;
         private ConsumeEventCatalogBuilder _eventCatalog;
         private CallbackExecutorFactory _execFactory;
-        private readonly IQueueConsumer _consumer;
         private readonly DepsCatalog _deps;
 
 
-        public ConsumeCatalogBuilder(Routes routes, ContextFactory contextFactory, Func<Context, object> servCreator, IQueueConsumer qConsumer, DepsCatalog deps)
+        public ConsumeCatalogBuilder(Routes routes, ContextFactory contextFactory, Func<Context, object> servCreator, DepsCatalog deps)
         {
             _commandCatalog = new ConsumeCommandCatalogBuilder(routes, contextFactory);
             _eventCatalog = new ConsumeEventCatalogBuilder(routes, contextFactory);
             _execFactory = new CallbackExecutorFactory(servCreator, deps);
-            _consumer = qConsumer;
             _deps = deps;
         }
 
@@ -44,27 +42,27 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
         }
             
 
-        public void Register()
+        public void Register(IQueueConsumer qConsumer)
         {
-            RegisterEvents();
-            RegisterCommands();
+            RegisterEvents(qConsumer);
+            RegisterCommands(qConsumer);
         }
 
-        private void RegisterCommands()
+        private void RegisterCommands(IQueueConsumer qConsumer)
         {
             if (!_commandCatalog.GetConsumeRoute().IsApplicable)
                 return;
             _deps.Logger.LogDebug($"Register command queue: {_commandCatalog.GetConsumeRoute().Queue}");
-            _consumer.RegisterCommandConsumer(_commandCatalog.GetConsumeRoute().Queue, _commandCatalog.GetExecuter());
+            qConsumer.RegisterCommandConsumer(_commandCatalog.GetConsumeRoute().Queue, _commandCatalog.GetExecuter());
         }
-        private void RegisterEvents()
+        private void RegisterEvents(IQueueConsumer qConsumer)
         {
             var consumeRoutes = _eventCatalog.GetConsumeRoute();
             if (!consumeRoutes.IsApplicable)
                 return;
             var joined = String.Join(", ", consumeRoutes.Exchanges);
             _deps.Logger.LogDebug($"Register event queue: {consumeRoutes.Queue}, exchanges: {joined}");
-            _consumer.RegisterEventConsumer(consumeRoutes.Queue, consumeRoutes.Exchanges, _eventCatalog.GetExecuter());
+            qConsumer.RegisterEventConsumer(consumeRoutes.Queue, consumeRoutes.Exchanges, _eventCatalog.GetExecuter());
         }
     }
 }

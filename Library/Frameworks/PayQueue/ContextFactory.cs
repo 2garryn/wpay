@@ -38,5 +38,7 @@ namespace wpay.Library.Frameworks.PayQueue
                 throw new PayQueueException($"Can not deserialize Datagram. Data: {asStirng}", e);
             }
         }
+
+        
     }
 }

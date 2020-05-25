@@ -18,7 +18,7 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
             _contextFactory = contextFactory;
         }
         
-        public async Task Execute(IExchangePublisher exchangePublisher, Dictionary<string, string> metadata, byte[] data)
+        public async Task Execute(IExchangePublisher exchangePublisher, ConsumeMessageMetadata metadata, byte[] data)
         {
             var (context, t, message) = _contextFactory.New(exchangePublisher, data);
             await GetExecutor(t).Execute(message, context);

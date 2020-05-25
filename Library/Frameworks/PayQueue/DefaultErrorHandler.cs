@@ -10,7 +10,7 @@ namespace wpay.Library.Frameworks.PayQueue
             Console.WriteLine("Received message");
             try
             {
-                act();
+                await act();
             }
             catch (Exception exc)
             {

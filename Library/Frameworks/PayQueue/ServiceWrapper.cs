@@ -46,9 +46,9 @@ namespace wpay.Library.Frameworks.PayQueue
             def.Configure(new ExecuteConfigurator(null!, publFactoryBuilder));
             _publisherFactory = publFactoryBuilder.Build();
             var contextFactory = new ContextFactory(_publisherFactory);
-            var consumeCatalog = new ConsumeCatalogBuilder(routes, contextFactory, (context) => _impl(context), _consumer, _deps);
+            var consumeCatalog = new ConsumeCatalogBuilder(routes, contextFactory, (context) => _impl(context), _deps);
             def.Configure(new ExecuteConfigurator(consumeCatalog, null!));
-            consumeCatalog.Register();
+            consumeCatalog.Register(_consumer);
             
         }
 
