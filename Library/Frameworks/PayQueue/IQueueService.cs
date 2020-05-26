@@ -27,6 +27,7 @@ namespace wpay.Library.Frameworks.PayQueue
     {
         public string? Queue {get;set;}
         public string? Exchange {get;set;}
+        public string MessageType { get; set; }
     }
     
 }

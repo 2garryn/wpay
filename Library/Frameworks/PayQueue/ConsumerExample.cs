@@ -57,15 +57,15 @@ namespace wpay.Library.Frameworks.PayQueue
         private readonly Context _context;
         public RespServImpl(Context context) => _context = context;
 
-        public async Task ConsumeCommand(Command1 command)
+        public async Task ConsumeCommand(MessageContext<Command1> context)
         {
-            Console.WriteLine($"Consumed command {command.CommandField1}");
+            Console.WriteLine($"Consumed command {context.Message.CommandField1}");
             await Task.Yield();
         }
 
-        public async Task ConsumeEvent(Notify1 notify)
+        public async Task ConsumeEvent(MessageContext<Notify1> notify)
         {
-            Console.WriteLine($"Consumed event {notify.NotifyField1}");
+            Console.WriteLine($"Consumed event {notify.Message.NotifyField1}");
             await Task.Yield();
         }
     }

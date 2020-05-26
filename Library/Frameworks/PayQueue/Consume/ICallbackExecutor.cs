@@ -5,6 +5,6 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
 {
     public interface ICallbackExecutor
     {
-        Task Execute(byte[] data, Context context);
+        Task Execute(IExchangePublisher exchangePublisher, byte[] data);
     }
 }

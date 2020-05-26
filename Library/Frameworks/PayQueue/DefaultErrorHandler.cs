@@ -5,12 +5,12 @@ namespace wpay.Library.Frameworks.PayQueue
 {
     public class DefaultErrorHandler: IErrorEventHandling, IErrorCommandHandling
     {
-        public async Task Invoke<T>(Context context, T message, Func<Task> act)
+        public async Task Invoke<T>(MessageContext<T> context, Func<MessageContext<T>, Task> act)
         {
             Console.WriteLine("Received message");
             try
             {
-                await act();
+                await act(context);
             }
             catch (Exception exc)
             {

@@ -8,15 +8,17 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
     {
         private ConsumeCommandCatalogBuilder _commandCatalog;
         private ConsumeEventCatalogBuilder _eventCatalog;
-        private CallbackExecutorFactory _execFactory;
+        private ConsumerFactory _consumerFactory;
+        private MessageContextFactory _contextFactory;
         private readonly DepsCatalog _deps;
 
 
-        public ConsumeCatalogBuilder(Routes routes, ContextFactory contextFactory, Func<Context, object> servCreator, DepsCatalog deps)
+        public ConsumeCatalogBuilder(Routes routes, MessageContextFactory contextFactory, ConsumerFactory consumerFactory, DepsCatalog deps)
         {
             _commandCatalog = new ConsumeCommandCatalogBuilder(routes, contextFactory);
             _eventCatalog = new ConsumeEventCatalogBuilder(routes, contextFactory);
-            _execFactory = new CallbackExecutorFactory(servCreator, deps);
+            _consumerFactory = consumerFactory;
+            _contextFactory = contextFactory;
             _deps = deps;
         }
 
@@ -24,21 +26,24 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
         public void ConsumeCommand<T>()
         {
             _deps.Logger.LogDebug($"Define consume command {typeof(T).FullName}");
-            _commandCatalog.Consume<T>(_execFactory.NewCommand<T>());
+            var consumerFactory = _consumerFactory.NewCommandConsumerFactory<T>();
+            _commandCatalog.Consume<T>(new CallbackExecutorCommand<T>(consumerFactory, _contextFactory, _deps));
         }
 
 
         public void ConsumeEvent<S, T>() where S : IServiceDefinition, new()  
         {
             _deps.Logger.LogDebug($"Define consume event {typeof(S).FullName}:{typeof(T).FullName}");
-            _eventCatalog.Consume<S, T>(_execFactory.NewEvent<S, T>()); 
+            var consumerFactory = _consumerFactory.NewEventConsumerFactory<S, T>();
+            _eventCatalog.Consume<S, T>(new CallbackExecutorEvent<S, T>(consumerFactory, _contextFactory, _deps)); 
         }
 
 
         public void ConsumeEvent<S, T>(string key) where S : IServiceDefinition, new()
         {
             _deps.Logger.LogDebug($"Define consume event {typeof(S).FullName}:{typeof(T).FullName} with route key {key}");
-            _eventCatalog.Consume<S, T>(key, _execFactory.NewEvent<S, T>());
+            var consumerFactory = _consumerFactory.NewEventConsumerFactory<S, T>();
+            _eventCatalog.Consume<S, T>(key, new CallbackExecutorEvent<S, T>(consumerFactory, _contextFactory, _deps));
         }
             
 

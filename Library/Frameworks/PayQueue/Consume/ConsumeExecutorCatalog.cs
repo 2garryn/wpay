@@ -10,9 +10,9 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
 {
     internal class ConsumeExecutorCatalog : IConsumeExecutor
     {
-        private readonly ImmutableDictionary<Type, ICallbackExecutor> _consumers;
-        private readonly ContextFactory _contextFactory;
-        public ConsumeExecutorCatalog(ImmutableDictionary<Type, ICallbackExecutor> consumers, ContextFactory contextFactory)
+        private readonly ImmutableDictionary<string, ICallbackExecutor> _consumers;
+        private readonly MessageContextFactory _contextFactory;
+        public ConsumeExecutorCatalog(ImmutableDictionary<string, ICallbackExecutor> consumers, MessageContextFactory contextFactory)
         {
             _consumers = consumers;
             _contextFactory = contextFactory;
@@ -20,11 +20,10 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
         
         public async Task Execute(IExchangePublisher exchangePublisher, ConsumeMessageMetadata metadata, byte[] data)
         {
-            var (context, t, message) = _contextFactory.New(exchangePublisher, data);
-            await GetExecutor(t).Execute(message, context);
+            await GetExecutor(metadata.MessageType).Execute(exchangePublisher, data);
         }
 
-        private ICallbackExecutor GetExecutor(Type t)
+        private ICallbackExecutor GetExecutor(string t)
         {
             try
             {
@@ -32,7 +31,7 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
             }
             catch (KeyNotFoundException e)
             {
-                var msg = $"Received message was not defined in contract: {t.FullName}";
+                var msg = $"Received message was not defined in contract: {t}";
                 throw new PayQueueException(msg, e);
             }
         }

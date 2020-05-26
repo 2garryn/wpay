@@ -33,7 +33,7 @@ namespace wpay.Library.Frameworks.PayQueue
         Task ConsumeCommand(MessageContext<T> message);
     }
 
-    public interface IEventConsumer<S, T>
+    public interface IEventConsumer<S, T> where S: IServiceDefinition, new()
     {
         Task ConsumeEvent(MessageContext<T>  message);
     }
@@ -48,11 +48,11 @@ namespace wpay.Library.Frameworks.PayQueue
 
     public interface IErrorCommandHandling
     {
-        Task Invoke<TCommand>(Context context, TCommand command, Func<Task> next);
+        Task Invoke<TCommand>(MessageContext<TCommand> messageContext, Func<MessageContext<TCommand>, Task> next);
     }
     public interface IErrorEventHandling
     {
-        Task Invoke<TEvent>(Context context, TEvent ev, Func<Task> next);
+        Task Invoke<TEvent>(MessageContext<TEvent> messageContext, Func<MessageContext<TEvent>, Task> next);
     }
 
     public interface IInternalErrorHandler
