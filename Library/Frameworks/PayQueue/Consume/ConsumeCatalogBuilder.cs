@@ -8,12 +8,12 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
     {
         private ConsumeCommandCatalogBuilder _commandCatalog;
         private ConsumeEventCatalogBuilder _eventCatalog;
-        private ConsumerFactory _consumerFactory;
+        private IConsumerImplFactory _consumerFactory;
         private MessageContextFactory _contextFactory;
         private readonly DepsCatalog _deps;
 
 
-        public ConsumeCatalogBuilder(Routes routes, MessageContextFactory contextFactory, ConsumerFactory consumerFactory, DepsCatalog deps)
+        public ConsumeCatalogBuilder(Routes routes, MessageContextFactory contextFactory, IConsumerImplFactory consumerFactory, DepsCatalog deps)
         {
             _commandCatalog = new ConsumeCommandCatalogBuilder(routes, contextFactory);
             _eventCatalog = new ConsumeEventCatalogBuilder(routes, contextFactory);
@@ -31,11 +31,11 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
         }
 
 
-        public void ConsumeEvent<S, T>() where S : IServiceDefinition, new()  
+        public void ConsumeEvent<TServDef, T>() where TServDef : IServiceDefinition, new()  
         {
-            _deps.Logger.LogDebug($"Define consume event {typeof(S).FullName}:{typeof(T).FullName}");
-            var consumerFactory = _consumerFactory.NewEventConsumerFactory<S, T>();
-            _eventCatalog.Consume<S, T>(new CallbackExecutorEvent<S, T>(consumerFactory, _contextFactory, _deps)); 
+            _deps.Logger.LogDebug($"Define consume event {typeof(TServDef).FullName}:{typeof(T).FullName}");
+            var consumerFactory = _consumerFactory.NewEventConsumerFactory<TServDef, T>();
+            _eventCatalog.Consume<TServDef, T>(new CallbackExecutorEvent<TServDef, T>(consumerFactory, _contextFactory, _deps)); 
         }
 
 

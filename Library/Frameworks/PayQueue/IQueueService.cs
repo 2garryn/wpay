@@ -13,13 +13,13 @@ namespace wpay.Library.Frameworks.PayQueue
 
     public interface IExchangePublisher
     {
-        Task PublishEvent(string endpoint, byte[] data);
-        Task Command(string endpoint, byte[] data);
+        Task PublishEvent(string endpoint, string messageType, byte[] data);
+        Task Command(string endpoint, string messageType, byte[] data);
     }
 
     public interface IConsumeExecutor
     {
-        Task Execute(IExchangePublisher exchangePublisher, ConsumeMessageMetadata messageMetadata, byte[] data);
+        Task Execute(IExchangePublisher exchangePublisher,  string messageType, byte[] data, ConsumeMessageMetadata messageMetadata);
     }
 
 
@@ -27,7 +27,6 @@ namespace wpay.Library.Frameworks.PayQueue
     {
         public string? Queue {get;set;}
         public string? Exchange {get;set;}
-        public string MessageType { get; set; }
     }
     
 }

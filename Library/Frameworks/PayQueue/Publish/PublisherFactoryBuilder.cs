@@ -9,11 +9,15 @@ namespace wpay.Library.Frameworks.PayQueue.Publish
         private PublishCommandCatalogBuilder _commandCatalog;
         private PublishEventCatalogBuilder _eventCatalog;
         private DepsCatalog _deps;
-        public PublisherFactoryBuilder(Routes routes, DepsCatalog depsCatalog)
+        private readonly string _sourceService;
+        private readonly string _sourceHost;
+        public PublisherFactoryBuilder(Routes routes, DepsCatalog depsCatalog, string sourceService, string sourceHost)
         {
             _eventCatalog = new PublishEventCatalogBuilder(routes, depsCatalog);
             _commandCatalog = new PublishCommandCatalogBuilder(routes, depsCatalog);
             _deps = depsCatalog;
+            _sourceService = sourceService;
+            _sourceHost = sourceHost;
         }
 
         public void Command<S, T>() where S : IServiceDefinition, new() => _commandCatalog.Command<S, T>();
@@ -22,7 +26,7 @@ namespace wpay.Library.Frameworks.PayQueue.Publish
 
         public PublisherFactory Build()
         {
-            return new PublisherFactory(_commandCatalog.Build(), _eventCatalog.Build(), _deps);
+            return new PublisherFactory(_commandCatalog.Build(), _eventCatalog.Build(), _deps, _sourceService, _sourceHost);
         }
     }
 }

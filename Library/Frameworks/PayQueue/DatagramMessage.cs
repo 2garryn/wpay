@@ -11,9 +11,9 @@ namespace wpay.Library.Frameworks.PayQueue
         public T Message {get;set;}
         public string SourceService {get;set;}
         public string SourceHost {get;set;}
-        public string DestinationService {get;set;}
         public DateTime PublishTimestamp {get;set;}
         public Guid? ConversationId {get;set;}
+
     }
 
 

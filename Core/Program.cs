@@ -7,8 +7,9 @@ namespace Core
 {
     class Program
     {
-        public static async Task Main()
+        public static void Main()
         {
+            /*
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
                 .Build();
@@ -17,6 +18,7 @@ namespace Core
             var serv = new CoreService(configuration);
             await serv.Execute();
             Console.WriteLine("End");
+            */
         }
     }
 }

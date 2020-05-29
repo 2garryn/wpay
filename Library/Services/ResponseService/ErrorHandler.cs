@@ -7,11 +7,11 @@ namespace wpay.Library.Services.ResponseService
 {
     public class ErrorHandler: IErrorEventHandling, IErrorCommandHandling
     {
-        public async Task Invoke<T>(Context context, T message, Func<Task> task)
+        public async Task Invoke<T>(MessageContext<T> context, Func<MessageContext<T>, Task> next)
         {
             try
             {
-                await task();
+                await next(context);
             }
             catch (Exception excp)
             {

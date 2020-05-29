@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using wpay.Library.Frameworks.PayQueue;
+using wpay.Library.Frameworks.PayQueue.Publish;
 using wpay.Library.Services.ResponseService;
 
 namespace wpay.Library.Services.RequestService
@@ -11,42 +12,37 @@ namespace wpay.Library.Services.RequestService
         IEventConsumer<ResponseServiceDefinition, UpdatedEvent>,
         IEventConsumer<ResponseServiceDefinition, CreateError>
     {
-        private Context _context;
-        public RequestServiceImpl(Context context)
-        {
-            _context = context;
-        }
 
-        public async Task Create()
+        public async Task Create(Publisher publisher)
         {
             var g = Guid.NewGuid();
             Console.WriteLine($"Start conversation with {g}");
-            await _context.Publisher.Command<ResponseServiceDefinition, CreateCommand>(new CreateCommand()
+            await publisher.Command<ResponseServiceDefinition, CreateCommand>(new CreateCommand()
             {
                 Name = "Some name",
                 Amount = 5
             }, ps => ps.ConversationId = g);
         }
 
-        public async Task ConsumeEvent(CreatedEvent message)
+        public async Task ConsumeEvent(MessageContext<CreatedEvent> message)
         {
-            await _context.Publisher.Command<ResponseServiceDefinition, UpdateCommand>(new UpdateCommand()
+            await message.Publisher.Command<ResponseServiceDefinition, UpdateCommand>(new UpdateCommand()
             {
                 Name = "Some update",
                 Amount = 4443123,
                 Flag = "myflag"
-            }, ps => ps.ConversationId = _context.ConversationId);
+            }, ps => ps.ConversationId = message.ConversationId);
         }
-        public async Task ConsumeEvent(UpdatedEvent message)
+        public async Task ConsumeEvent(MessageContext<UpdatedEvent> message)
         {
-            Console.WriteLine($"UpdatedCommand message consumed {message.Name} {message.Amount} {message.Flag}");
-            Console.WriteLine($"End convesation with {_context.ConversationId}");
+            Console.WriteLine($"UpdatedCommand message consumed {message.Message.Name} {message.Message.Amount} {message.Message.Flag}");
+            Console.WriteLine($"End convesation with {message.ConversationId}");
             await Task.Yield();
         }
 
-        public async Task ConsumeEvent(CreateError message)
+        public async Task ConsumeEvent(MessageContext<CreateError> message)
         {
-            Console.WriteLine($"Something goes wrong {message.Reason} convid {_context.ConversationId}");
+            Console.WriteLine($"Something goes wrong {message.Message.Reason} convid {message.ConversationId}");
             await Task.Yield();
         }
     }

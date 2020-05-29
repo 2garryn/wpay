@@ -19,33 +19,32 @@ namespace wpay.Library.Services.Core
         ICommandConsumer<CreateTransactionCommand>,
         ICommandConsumer<UpdateTransactionCommand>
     {
-        private readonly Context _context;
         private readonly DbClient _db;
 
-        public CoreServiceImpl(Context context, DbClient db) =>
-            (_context, _db) = (context, db);
+        public CoreServiceImpl(DbClient db) =>
+            ( _db) = ( db);
 
 
-        public async Task ConsumeCommand(CreateAccountCommand createAccount) =>
+        public async Task ConsumeCommand(MessageContext<CreateAccountCommand> createAccount) =>
             await Exec(async (core) =>
             {
-                var acc = await core.CreateAsync(createAccount.To(), (opts) => opts.IngoreOnDuplicate = true);
+                var acc = await core.CreateAsync(createAccount.Message.To(), (opts) => opts.IngoreOnDuplicate = true);
                 return new AccountCreated() { Event = AccountEvent.From(acc) };
-            }, _context.ConversationId);
+            }, createAccount.ConversationId);
 
-        public async Task ConsumeCommand(CreateTransactionCommand createTransaction) =>
+        public async Task ConsumeCommand(MessageContext<CreateTransactionCommand> createTransaction) =>
             await Exec(async (core) =>
             {
-                var tran = await core.CreateAsync(createTransaction.To(), (opts) => opts.FailOnExist = false);
+                var tran = await core.CreateAsync(createTransaction.Message.To(), (opts) => opts.FailOnExist = false);
                 return new TransactionCreated() { Event = TransactionEvent.From(tran) };
-            }, _context.ConversationId);
+            }, createTransaction.ConversationId);
 
-        public async Task ConsumeCommand(UpdateTransactionCommand updateTransaction) =>
+        public async Task ConsumeCommand(MessageContext<UpdateTransactionCommand> updateTransaction) =>
             await Exec(async (core) =>
             {
-                var tran = await core.UpdateAsync(updateTransaction.To(), (opts) => opts.FailOnUpdateDone = false);
+                var tran = await core.UpdateAsync(updateTransaction.Message.To(), (opts) => opts.FailOnUpdateDone = false);
                 return new TransactionUpdated() { Event = TransactionEvent.From(tran) };
-            }, _context.ConversationId);
+            }, updateTransaction.ConversationId);
 
         private async Task Exec(Func<Service.Service, Task<ICoreEvent>> serv, Guid? convId)
         {

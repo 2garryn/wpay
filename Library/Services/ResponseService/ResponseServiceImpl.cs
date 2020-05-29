@@ -11,27 +11,25 @@ namespace ResponseService
         ICommandConsumer<CreateCommand>,
         ICommandConsumer<UpdateCommand>
     {
-        private Context _context;
-        public ResponseServiceImpl(Context context) => _context = context;
 
 
-        public async Task ConsumeCommand(CreateCommand createCommand)
+        public async Task ConsumeCommand(MessageContext<CreateCommand> createCommand)
         {
 
-            await _context.Publisher.Publish(new CreatedEvent()
+            await createCommand.Publisher.Publish(new CreatedEvent()
             {
-                Name = createCommand.Name,
-                Amount = createCommand.Amount
-            }, ps => ps.ConversationId = _context.ConversationId);
+                Name = createCommand.Message.Name,
+                Amount = createCommand.Message.Amount
+            }, ps => ps.ConversationId = createCommand.ConversationId);
         }
-        public async Task ConsumeCommand(UpdateCommand updateCommand)
+        public async Task ConsumeCommand(MessageContext<UpdateCommand> updateCommand)
         {
-            await _context.Publisher.Publish(new UpdatedEvent()
+            await updateCommand.Publisher.Publish(new UpdatedEvent()
             {
-                Name = updateCommand.Name,
-                Amount = updateCommand.Amount,
-                Flag = updateCommand.Flag
-            }, ps => ps.ConversationId = _context.ConversationId);
+                Name = updateCommand.Message.Name,
+                Amount = updateCommand.Message.Amount,
+                Flag = updateCommand.Message.Flag
+            }, ps => ps.ConversationId = updateCommand.ConversationId);
         }
     }
 }

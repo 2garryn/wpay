@@ -41,9 +41,9 @@ namespace wpay.Library.Frameworks.PayQueue
     public interface ICallParameters
     {
         Guid? ConversationId {set; get;}
+        Guid? RequestId { set; get; }
     }
 
-    public delegate Task NextDelegate<T>(T message, Context context);
 
 
     public interface IErrorCommandHandling
@@ -58,6 +58,12 @@ namespace wpay.Library.Frameworks.PayQueue
     public interface IInternalErrorHandler
     {
         
+    }
+
+    public interface IImplFactory<TServDef, TImpl> where TServDef : IServiceDefinition, new() where TImpl : IServiceImpl<TServDef>
+    {
+        TImpl New();
+        IConsumerImplFactory GetConsumerFactory();
     }
 
 }

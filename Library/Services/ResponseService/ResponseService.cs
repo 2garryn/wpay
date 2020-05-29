@@ -28,7 +28,9 @@ namespace Library.Services.ResponseService
         public async Task Execute()
         {
             var consumer = new RabbitMqConsumer(_rabbitUsername, _rabbitPassword, "/pay_queue", _rabbitHost);
-            var serv = new ServiceWrapper<ResponseServiceDefinition, ResponseServiceImpl>(consumer,  (Context context) => new ResponseServiceImpl(context),
+            var factory =
+                new ImplFactoryDelegate<ResponseServiceDefinition, ResponseServiceImpl>(() => new ResponseServiceImpl());
+            var serv = new ServiceWrapper<ResponseServiceDefinition, ResponseServiceImpl>(consumer,  factory,
                 (conf) =>
                 {
                     conf.UseErrorEventHandling(() => new ErrorHandler());

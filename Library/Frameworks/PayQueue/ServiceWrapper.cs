@@ -9,27 +9,20 @@ using wpay.Library.Frameworks.PayQueue.Publish;
 
 namespace wpay.Library.Frameworks.PayQueue
 {
-    using MessageType = Type;
-    using CallbackAction = Func<object, Context, Task>;
-
-    public delegate TImpl ImplFactory<TImpl, TServDef>(Context context)
-            where TServDef : IServiceDefinition, new()
-            where TImpl : IServiceImpl<TServDef>;
-
 
     public class ServiceWrapper<TServDef, TImpl>
         where TServDef : IServiceDefinition, new()
         where TImpl : IServiceImpl<TServDef>
     {
         private readonly IQueueConsumer _consumer;
-        private readonly ImplFactory<TImpl, TServDef> _impl;
+        private readonly IImplFactory<TServDef, TImpl> _impl;
         private PublisherFactory _publisherFactory;
 
         private readonly  DepsCatalog _deps;
         //private readonly ServiceWrapperConf _conf;
 
 
-        public ServiceWrapper(IQueueConsumer consumer, ImplFactory<TImpl, TServDef> impl, Action<ServiceWrapperConf>? confAct = null) 
+        public ServiceWrapper(IQueueConsumer consumer, IImplFactory<TServDef, TImpl> impl, Action<ServiceWrapperConf>? confAct = null) 
         {
             _consumer = consumer;
             _impl = impl;
@@ -41,29 +34,29 @@ namespace wpay.Library.Frameworks.PayQueue
         public void Execute()
         {
             var def = new TServDef();
-            var routes = new Routes(_deps.Prefix, new TServDef().Label());
-            var publFactoryBuilder = new PublisherFactoryBuilder(routes, _deps);
+            var routes = new Routes(_deps.Prefix, def.Label());
+            var publFactoryBuilder = new PublisherFactoryBuilder(routes, _deps, def.Label(), "none");
             def.Configure(new ExecuteConfigurator(null!, publFactoryBuilder));
             _publisherFactory = publFactoryBuilder.Build();
-            var contextFactory = new ContextFactory(_publisherFactory);
-            var consumeCatalog = new ConsumeCatalogBuilder(routes, contextFactory, (context) => _impl(context), _deps);
+            var contextFactory = new MessageContextFactory(_publisherFactory);
+            var consumeCatalog = new ConsumeCatalogBuilder(routes, contextFactory, _impl.GetConsumerFactory(), _deps);
             def.Configure(new ExecuteConfigurator(consumeCatalog, null!));
             consumeCatalog.Register(_consumer);
-            
         }
 
-        public TImpl GetService(Action<ICallParameters>? p = null)
+
+        public async Task<TResult> CallAsync<TResult>(Func<TImpl, Publisher, Task<TResult>> caller)
         {
-            var callParameters = new CallParameters();
-            p?.Invoke(callParameters);
-
-            var context = new Context(
-                Guid.NewGuid(),
-                callParameters.ConversationId,
-                _publisherFactory.New(_consumer.GetExchangePublisher())
-            );
-            return _impl(context);
+            var publ = _publisherFactory.New(_consumer.GetExchangePublisher());
+            return await caller(_impl.New(), publ);
         }
+        
+        public async Task CallAsync(Func<TImpl, Publisher, Task> caller)
+        {
+            var publ = _publisherFactory.New(_consumer.GetExchangePublisher());
+            await caller(_impl.New(), publ);
+        }
+
         
     }
 }

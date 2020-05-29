@@ -17,16 +17,16 @@ namespace wpay.Library.Frameworks.PayQueue
                 })
                 .CreateLogger(PrepareCategory(def, implType));
         }
-        
-        
+
+
         public string Prefix { get; }
         public Func<IErrorCommandHandling> ErrorCommandHandling { get; }
-        public Func<IErrorEventHandling> ErrorEventHandling { get;  }
+        public Func<IErrorEventHandling> ErrorEventHandling { get; }
         public ILogger Logger { get; private set; }
 
 
-        private string PrepareCategory(IServiceDefinition def, Type implType) => 
+        private string PrepareCategory(IServiceDefinition def, Type implType) =>
             $"[{def.GetType().Name}({def.Label()}): {implType.Name}]";
-        
+
     }
 }

@@ -18,9 +18,9 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
             _contextFactory = contextFactory;
         }
         
-        public async Task Execute(IExchangePublisher exchangePublisher, ConsumeMessageMetadata metadata, byte[] data)
+        public async Task Execute(IExchangePublisher exchangePublisher, string messageType, byte[] data, ConsumeMessageMetadata metadata)
         {
-            await GetExecutor(metadata.MessageType).Execute(exchangePublisher, data);
+            await GetExecutor(messageType).Execute(exchangePublisher, data);
         }
 
         private ICallbackExecutor GetExecutor(string t)
