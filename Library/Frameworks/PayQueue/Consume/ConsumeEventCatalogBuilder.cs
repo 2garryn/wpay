@@ -10,11 +10,13 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
         private Dictionary<string, ICallbackExecutor> _catalog;
         private readonly ConsumeEventRoute _consumeRoutes;
         private readonly MessageContextFactory _contextFactory;
-        public ConsumeEventCatalogBuilder(Routes routes, MessageContextFactory contextFactory)
+        private readonly DepsCatalog _deps;
+        public ConsumeEventCatalogBuilder(Routes routes, MessageContextFactory contextFactory, DepsCatalog deps)
         {
             _catalog = new Dictionary<string, ICallbackExecutor>();
             _consumeRoutes = new ConsumeEventRoute(routes);
             _contextFactory = contextFactory;
+            _deps = deps;
         }
 
         public void Consume<S, T>(ICallbackExecutor executor) 
@@ -31,7 +33,7 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
         }
 
         public IConsumeExecutor GetExecuter() =>
-            new ConsumeExecutorCatalog(_catalog.ToImmutableDictionary(), _contextFactory);
+            new ConsumeExecutorCatalog(_catalog.ToImmutableDictionary(), _contextFactory, _deps);
 
         public ConsumeEventRoute GetConsumeRoute() =>
             _consumeRoutes;

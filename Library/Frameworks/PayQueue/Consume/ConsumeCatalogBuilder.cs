@@ -15,11 +15,11 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
 
         public ConsumeCatalogBuilder(Routes routes, MessageContextFactory contextFactory, IConsumerImplFactory consumerFactory, DepsCatalog deps)
         {
-            _commandCatalog = new ConsumeCommandCatalogBuilder(routes, contextFactory);
-            _eventCatalog = new ConsumeEventCatalogBuilder(routes, contextFactory);
             _consumerFactory = consumerFactory;
             _contextFactory = contextFactory;
             _deps = deps;
+            _commandCatalog = new ConsumeCommandCatalogBuilder(routes, contextFactory, _deps);
+            _eventCatalog = new ConsumeEventCatalogBuilder(routes, contextFactory, _deps);
         }
 
 

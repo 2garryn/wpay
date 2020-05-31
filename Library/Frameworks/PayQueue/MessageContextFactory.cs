@@ -9,15 +9,15 @@ namespace wpay.Library.Frameworks.PayQueue
 
     public class MessageContextFactory
     {
-        private PublisherFactory _publisherFactory;
+        private readonly PublisherFactory _publisherFactory;
         internal MessageContextFactory(PublisherFactory publisherFactory)
         {
             _publisherFactory = publisherFactory;
         }
 
-        public MessageContext<T> New<T>(IExchangePublisher _expPubl, byte[] data)
+        public MessageContext<T> New<T>(IExchangePublisher expPubl, byte[] data)
         {
-            var datagram = JsonSerializer.Deserialize<DatagramMessage<T>>(data);
+            var datagram = Deserialize<T>(data);
             return new MessageContext<T>()
             {
                 RequestId = datagram.RequestId,
@@ -26,8 +26,28 @@ namespace wpay.Library.Frameworks.PayQueue
                 SourceService = datagram.SourceService,
                 PublishTimestamp = datagram.PublishTimestamp,
                 ConversationId = datagram.ConversationId,
-                Publisher = _publisherFactory.New(_expPubl)
+                Publisher = _publisherFactory.New(expPubl)
             };
+        }
+
+        private DatagramMessage<T> Deserialize<T>(byte[] data)
+        {
+            try
+            {
+                return JsonSerializer.Deserialize<DatagramMessage<T>>(data);
+            }
+            catch (ArgumentNullException inner)
+            {
+                var excp = new PayQueueException("Can not deserialize message", inner);
+                excp.Data["Type"] = typeof(T);
+                throw excp;
+            }
+            catch (JsonException inner)
+            {
+                var excp = new PayQueueException("Can not deserialize message", inner);
+                excp.Data["Type"] = typeof(T);
+                throw excp;
+            }
         }
 
     }

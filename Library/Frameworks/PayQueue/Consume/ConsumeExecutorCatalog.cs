@@ -12,27 +12,33 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
     {
         private readonly ImmutableDictionary<string, ICallbackExecutor> _consumers;
         private readonly MessageContextFactory _contextFactory;
-        public ConsumeExecutorCatalog(ImmutableDictionary<string, ICallbackExecutor> consumers, MessageContextFactory contextFactory)
+        private readonly DepsCatalog _deps;
+        public ConsumeExecutorCatalog(ImmutableDictionary<string, ICallbackExecutor> consumers, MessageContextFactory contextFactory, DepsCatalog depsCatalog)
         {
             _consumers = consumers;
             _contextFactory = contextFactory;
+            _deps = depsCatalog;
         }
         
-        public async Task Execute(IExchangePublisher exchangePublisher, string messageType, byte[] data, ConsumeMessageMetadata metadata)
+        public async Task Execute(IExchangePublisher exchangePublisher, Func<string> messageType, byte[] data, ConsumeMessageMetadata metadata)
         {
-            await GetExecutor(messageType).Execute(exchangePublisher, data);
+            await GetExecutor(messageType(), metadata).Execute(exchangePublisher, data);
         }
+        
 
-        private ICallbackExecutor GetExecutor(string t)
+        private ICallbackExecutor GetExecutor(string messageType, ConsumeMessageMetadata metadata)
         {
             try
             {
-                return _consumers[t];
+                return _consumers[messageType];
             }
-            catch (KeyNotFoundException e)
+            catch (KeyNotFoundException)
             {
-                var msg = $"Received message was not defined in contract: {t}";
-                throw new PayQueueException(msg, e);
+                var excp = new PayQueueException("Received message was not defined in contract.");
+                excp.Data["Queue"] = metadata.Queue;
+                excp.Data["Exchange"] = metadata.Exchange;
+                excp.Data["Type"] = messageType;
+                throw excp;
             }
         }
         

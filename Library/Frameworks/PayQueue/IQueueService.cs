@@ -19,7 +19,7 @@ namespace wpay.Library.Frameworks.PayQueue
 
     public interface IConsumeExecutor
     {
-        Task Execute(IExchangePublisher exchangePublisher,  string messageType, byte[] data, ConsumeMessageMetadata messageMetadata);
+        Task Execute(IExchangePublisher exchangePublisher, Func<string> messageType, byte[] data, ConsumeMessageMetadata messageMetadata);
     }
 
 

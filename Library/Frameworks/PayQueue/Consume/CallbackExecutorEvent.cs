@@ -6,12 +6,12 @@ using wpay.Library.Frameworks.PayQueue;
 
 namespace wpay.Library.Frameworks.PayQueue.Consume
 {
-    public class CallbackExecutorEvent<TServDef, T>: ICallbackExecutor where TServDef : IServiceDefinition, new()
+    public class CallbackExecutorEvent<TServiceDefinition, T>: ICallbackExecutor where TServiceDefinition : IServiceDefinition, new()
     {
-        private EventConsumerFactory<TServDef, T> _consumerFactory;
-        private DepsCatalog _deps;
-        private MessageContextFactory _contextFactory;
-        internal CallbackExecutorEvent(EventConsumerFactory<TServDef, T> consumerFactory, MessageContextFactory contextFactory, DepsCatalog deps)
+        private readonly EventConsumerFactory<TServiceDefinition, T> _consumerFactory;
+        private readonly DepsCatalog _deps;
+        private readonly MessageContextFactory _contextFactory;
+        internal CallbackExecutorEvent(EventConsumerFactory<TServiceDefinition, T> consumerFactory, MessageContextFactory contextFactory, DepsCatalog deps)
         {
             _consumerFactory = consumerFactory;
             _deps = deps;
@@ -22,7 +22,9 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
         {
             var messageContext = _contextFactory.New<T>(exchangePublisher, data);
             var impl = _consumerFactory.New();
+            _deps.Logger.LogDebug($"Consume event {typeof(T).FullName}. RequestID: {messageContext.RequestId} ConversationID: {messageContext.ConversationId} SourceService: {messageContext.SourceService} PublishTimestamp: {messageContext.PublishTimestamp}");
             await _deps.ErrorEventHandling().Invoke(messageContext, impl.ConsumeEvent);
+            _deps.Logger.LogDebug($"Consumed event {typeof(T).FullName} successfully. RequestID: {messageContext.RequestId}");
         }
     }
 

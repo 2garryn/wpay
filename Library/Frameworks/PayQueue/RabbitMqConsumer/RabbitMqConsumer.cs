@@ -48,7 +48,7 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
                     Queue = queue,
                     Exchange = ea.Exchange
                 };
-                var messageType = (string)ea.BasicProperties.Headers["message_type"];
+                Func<string> messageType = () => (string) ea.BasicProperties.Headers["message_type"];
                 await executor.Execute(GetExchangePublisher(), messageType,  ea.Body.ToArray(), metadata);
                 channel.BasicAck(ea.DeliveryTag, false);
             };
@@ -72,7 +72,7 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
                     Exchange = ea.Exchange
                 
                 };
-                var messageType = (string) ea.BasicProperties.Headers["message_type"];
+                Func<string> messageType = () => (string) ea.BasicProperties.Headers["message_type"];
                 await executor.Execute(GetExchangePublisher(), messageType, ea.Body.ToArray(), metadata);
                 channel.BasicAck(ea.DeliveryTag, false);
             };

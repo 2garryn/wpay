@@ -55,7 +55,7 @@ namespace wpay.Library.Frameworks.PayQueue
         Task Invoke<TEvent>(MessageContext<TEvent> messageContext, Func<MessageContext<TEvent>, Task> next);
     }
 
-    public interface IInternalErrorHandler
+    public interface IInternalExceptionHandler
     {
         
     }
