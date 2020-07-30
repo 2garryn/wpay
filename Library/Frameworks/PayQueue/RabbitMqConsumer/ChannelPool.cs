@@ -24,7 +24,8 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
             Task[] tasks = new Task[_size];
             for (var i = 0; i < _size; i++)
             {
-                tasks[i] = RunWorker();
+                tasks[i] = new Task(async () => await RunWorker(), TaskCreationOptions.LongRunning);
+                tasks[i].Start();
             }
 
             await Task.WhenAll(tasks);
@@ -40,13 +41,14 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
                     if (!exchanges.Contains(tsk.ExchangeName))
                     {
                         model.ExchangeDeclare(tsk.ExchangeName, tsk.ExchangeType, true, false);
+                        model.QueueDeclare(tsk.QueueName, true, false, false, null);
+                        model.QueueBind(tsk.QueueName, tsk.ExchangeName, "", null);
                         exchanges.Add(tsk.ExchangeName);
                     }
                     var props = model.CreateBasicProperties();
                     tsk.Properties(props);
                     
                     model.BasicPublish(tsk.ExchangeName, tsk.RoutingKey, true, props, tsk.Body);
-                    await Task.Yield();
                 }
             }
         }

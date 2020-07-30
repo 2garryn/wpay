@@ -8,8 +8,8 @@ namespace wpay.Library.Frameworks.PayQueue
         public DepsCatalog(ServiceWrapperConf conf, IServiceDefinition def, Type implType)
         {
             Prefix = conf.Prefix ?? "PayQueue";
-            ErrorCommandHandling = conf.ErrorCommandHandling ?? (() => new DefaultErrorHandler());
-            ErrorEventHandling = conf.ErrorEventHandling ?? (() => new DefaultErrorHandler());
+            MiddlewareCommand = conf.MiddlewareCommand ?? (() => new DefaultMiddleware());
+            MiddlewareEvent = conf.MiddlewareEvent ?? (() => new DefaultMiddleware());
             Logger = LoggerFactory.Create(builder =>
                 {
                     builder.AddConsole();
@@ -20,8 +20,8 @@ namespace wpay.Library.Frameworks.PayQueue
 
 
         public string Prefix { get; }
-        public Func<IErrorCommandHandling> ErrorCommandHandling { get; }
-        public Func<IErrorEventHandling> ErrorEventHandling { get; }
+        public Func<IMiddlewareCommand> MiddlewareCommand { get; }
+        public Func<IMiddlewareEvent> MiddlewareEvent { get; }
         public ILogger Logger { get; private set; }
 
 

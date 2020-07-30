@@ -28,6 +28,7 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
                 Body = data,
                 ExchangeName = exchange,
                 ExchangeType = ExchangeType.Fanout,
+                QueueName = exchange,
                 RoutingKey = ""
             });
         }
@@ -44,9 +45,27 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
                 Body = data,
                 ExchangeName = exchange,
                 ExchangeType = ExchangeType.Direct,
+                QueueName = exchange,
                 RoutingKey = ""
             });
         }
+
+        public async Task PublishError(string exchange, string queue, byte[] data)
+        {
+            await _channel.WriteAsync(new PublishMessage
+            {
+                Properties = (props) => 
+                {
+                    props.ContentType = "application/json";
+                },
+                Body = data,
+                ExchangeName = exchange,
+                ExchangeType = ExchangeType.Direct,
+                QueueName = exchange,
+                RoutingKey = ""
+            });
+        }
+
     }
 
 

@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Text;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Threading.Channels;
+using System.Text.Json;
 
 namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
 {
@@ -12,26 +14,27 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
     {
         private readonly IConnection _conn;
         private readonly Channel<PublishMessage> _poolChannel;
-        private const int PUBLISHER_POOL_SIZE = 5;
         private Task _poolTask;
+        private RabbitConfiguration _conf;
 
-        public RabbitMqConsumer(string user, string pass, string vhost, string hostname)
+        public RabbitMqConsumer(RabbitConfiguration conf)
         {
+            _conf = conf;
             ConnectionFactory factory = new ConnectionFactory()
             {
-                UserName = user,
-                Password = pass,
-                VirtualHost = vhost,
-                HostName = hostname,
+                UserName = _conf.Username,
+                Password = _conf.Password,
+                VirtualHost = _conf.VHost,
+                HostName = _conf.Hostname,
                 DispatchConsumersAsync = true
             };
             _conn = factory.CreateConnection();
-            var options = new BoundedChannelOptions(PUBLISHER_POOL_SIZE)
+            var options = new BoundedChannelOptions(_conf.PublishPoolSize)
             {
                 FullMode = BoundedChannelFullMode.Wait
             };
             _poolChannel = Channel.CreateBounded<PublishMessage>(options);
-            _poolTask = Task.Run(async () => await new ChannelPool(_conn, PUBLISHER_POOL_SIZE, _poolChannel.Reader).Run());
+            _poolTask = Task.Run(async () => await new ChannelPool(_conn, _conf.PublishPoolSize, _poolChannel.Reader).Run());
 
         }
         public void RegisterCommandConsumer(string queue, IConsumeExecutor executor)
@@ -41,17 +44,7 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
             channel.QueueDeclare(queue, true, false, false, null);
             channel.QueueBind(queue, queue, "", null);
             var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.Received += async (model, ea) =>
-            {
-                var metadata = new ConsumeMessageMetadata()
-                {
-                    Queue = queue,
-                    Exchange = ea.Exchange
-                };
-                Func<string> messageType = () => (string) ea.BasicProperties.Headers["message_type"];
-                await executor.Execute(GetExchangePublisher(), messageType,  ea.Body.ToArray(), metadata);
-                channel.BasicAck(ea.DeliveryTag, false);
-            };
+            consumer.Received += GetReceived(executor, queue, channel);
             channel.BasicConsume(queue, false, consumer);
         }
         public void RegisterEventConsumer(string queue, string[] exchanges, IConsumeExecutor executor)
@@ -64,20 +57,10 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
                 channel.QueueBind(queue, exchange, "", null);
             }
             var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.Received += async (model, ea) =>
-            {
-                var metadata = new ConsumeMessageMetadata()
-                {
-                    Queue = queue,
-                    Exchange = ea.Exchange
-                
-                };
-                Func<string> messageType = () => (string) ea.BasicProperties.Headers["message_type"];
-                await executor.Execute(GetExchangePublisher(), messageType, ea.Body.ToArray(), metadata);
-                channel.BasicAck(ea.DeliveryTag, false);
-            };
+            consumer.Received += GetReceived(executor, queue, channel);
             channel.BasicConsume(queue, false, consumer);
         }
+
         public IExchangePublisher GetExchangePublisher()
         {
             return new PooledExchangePublisher(_poolChannel.Writer);
@@ -87,6 +70,49 @@ namespace wpay.Library.Frameworks.PayQueue.RabbitMqConsumer
         {
             await _poolTask;
         }
+
+
+        private AsyncEventHandler<BasicDeliverEventArgs> GetReceived(IConsumeExecutor executor, string queue, IModel channel)
+        {
+            return async (model, ea) =>
+            {
+                var metadata = new ConsumeMessageMetadata()
+                    {
+                        Queue = queue,
+                        Exchange = ea.Exchange
+
+                    };
+                Func<string> messageType = () => (string)ea.BasicProperties.Headers["message_type"];
+                try
+                {
+
+                    await executor.Execute(GetExchangePublisher(), messageType, ea.Body.ToArray(), metadata);
+                    channel.BasicAck(ea.DeliveryTag, false);
+                }
+                catch (Exception e)
+                {
+                    var dataArr = ea.Body.ToArray();
+                    channel.BasicNack(ea.DeliveryTag, false, true);
+                    var errMsg = new PayQueueError()
+                    {
+                        ServiceLabel = _conf.ServiceLabel,
+                        ConsumeMessageType = messageType(),
+                        ConsumeParams = Encoding.UTF8.GetString(dataArr, 0, dataArr.Length),
+                        ExceptionType = e.GetType().ToString(),
+                        ExceptionMessage = e.Message,
+                        ExceptionStacktrace = e.StackTrace,
+                        Exchange = ea.Exchange
+                    };
+                    var data = JsonSerializer.Serialize(errMsg);
+                    await new PooledExchangePublisher(_poolChannel.Writer)
+                        .PublishError(_conf.ErrorExchange, _conf.ErrorQueue, Encoding.UTF8.GetBytes(data));
+                        
+                }
+            };
+        }
+
     }
+
+
 
 }

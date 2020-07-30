@@ -20,7 +20,6 @@ namespace wpay.Library.Frameworks.PayQueue
         void Command<S, T>() where S: IServiceDefinition, new();
         void PublishEvent<T>();
         void PublishEvent<T>(Func<T, string> routeFormatter);
-        void PublishError<T>(Func<T, string> routeFormatter);
     }
 
 
@@ -46,11 +45,11 @@ namespace wpay.Library.Frameworks.PayQueue
 
 
 
-    public interface IErrorCommandHandling
+    public interface IMiddlewareCommand
     {
         Task Invoke<TCommand>(MessageContext<TCommand> messageContext, Func<MessageContext<TCommand>, Task> next);
     }
-    public interface IErrorEventHandling
+    public interface IMiddlewareEvent
     {
         Task Invoke<TEvent>(MessageContext<TEvent> messageContext, Func<MessageContext<TEvent>, Task> next);
     }

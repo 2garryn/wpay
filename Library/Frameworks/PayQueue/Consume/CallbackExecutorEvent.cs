@@ -23,7 +23,7 @@ namespace wpay.Library.Frameworks.PayQueue.Consume
             var messageContext = _contextFactory.New<T>(exchangePublisher, data);
             var impl = _consumerFactory.New();
             _deps.Logger.LogDebug($"Consume event {typeof(T).FullName}. RequestID: {messageContext.RequestId} ConversationID: {messageContext.ConversationId} SourceService: {messageContext.SourceService} PublishTimestamp: {messageContext.PublishTimestamp}");
-            await _deps.ErrorEventHandling().Invoke(messageContext, impl.ConsumeEvent);
+            await _deps.MiddlewareEvent().Invoke(messageContext, impl.ConsumeEvent);
             _deps.Logger.LogDebug($"Consumed event {typeof(T).FullName} successfully. RequestID: {messageContext.RequestId}");
         }
     }

@@ -29,20 +29,5 @@ namespace wpay.Library.Frameworks.PayQueue
 
         public void PublishEvent<T>(Func<T, string> routeFormatter) => _publishCatalog?.PublishEvent<T>(routeFormatter);
 
-        public void PublishError<TError>()
-        {
-        }
-
-        public void PublishError<TError>(Func<TError, string> routeFormatter)
-        {
-        }
-
-        public void ConsumeError<S, TError>() where S : IServiceDefinition, new()
-        {
-        }
-
-        public void ConsumeError<S, TError>(string route) where S : IServiceDefinition, new()
-        {
-        }
     }
 }
